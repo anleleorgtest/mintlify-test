@@ -1,0 +1,80 @@
+---
+title: Signature Requests
+sidebarTitle: Overview
+description: Create, send, update, and manage signature requests; download files and signing links.
+---
+
+Everything about signature requests — create and send requests, manage signers, retrieve files, and cancel or remind.
+
+<CardGroup cols={2}>
+  <Card
+    title="Get Signature Request"
+    icon="file-lines"
+    href="/tabs/api-reference/api/signature-requests/get-signature-request.api"
+  >
+    Returns the information of the signature request.
+  </Card>
+  <Card
+    title="Update Signature Request"
+    icon="pen-to-square"
+    href="/tabs/api-reference/api/signature-requests/update-signature-request.api"
+  >
+    Update the due date of an existing signature request.
+  </Card>
+  <Card
+    title="Send Signature Request"
+    icon="paper-plane"
+    href="/tabs/api-reference/api/signature-requests/send-signature-request.api"
+  >
+    Creates and sends a new signature request with the submitted documents.
+  </Card>
+  <Card
+    title="Send Signature Request from Template"
+    icon="file-contract"
+    href="/tabs/api-reference/api/signature-requests/send-signature-request-from-template.api"
+  >
+    Creates and sends a new signature request from a template with the submitted template data.
+  </Card>
+  <Card
+    title="Get Signing Link"
+    icon="link"
+    href="/tabs/api-reference/api/signature-requests/get-signing-link.api"
+  >
+    Returns a signing URL for a signer within an existing signature request.
+  </Card>
+  <Card
+    title="Send Reminder Emails"
+    icon="envelope"
+    href="/tabs/api-reference/api/signature-requests/send-reminder-emails.api"
+  >
+    Send reminder emails to signers who still need to sign.
+  </Card>
+  <Card
+    title="Cancel Signature Request"
+    icon="ban"
+    href="/tabs/api-reference/api/signature-requests/cancel-signature-request.api"
+  >
+    Cancel a signature request.
+  </Card>
+  <Card
+    title="Get Signature Request File"
+    icon="download"
+    href="/tabs/api-reference/api/signature-requests/get-signature-request-file.api"
+  >
+    Obtain agreement, CoC, or merged PDF via signed URL or binary response.
+  </Card>
+  <Card
+    title="Download File as File URL"
+    icon="link"
+    href="/tabs/api-reference/api/signature-requests/download-file-as-file-url.api"
+  >
+    Legacy: JSON with a signed URL to the file. Deprecated; prefer Get Signature Request File.
+  </Card>
+  <Card
+    title="Download File"
+    icon="file-pdf"
+    href="/tabs/api-reference/api/signature-requests/download-file.api"
+  >
+    Legacy: returns a PDF file directly. Deprecated; prefer Get Signature Request File.
+  </Card>
+</CardGroup>

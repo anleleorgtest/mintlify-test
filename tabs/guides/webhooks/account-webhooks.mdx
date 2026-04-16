@@ -1,0 +1,107 @@
+---
+title: "Account Webhooks"
+description: "Configure a single webhook URL to receive all events across your entire Lumin workspace."
+---
+
+An account webhook covers your entire workspace. Once configured, Lumin sends all supported event types to your endpoint — regardless of which API key or user triggered them.
+
+<Note>
+  Only the **Workspace Owner** can configure or update the account webhook URL.
+</Note>
+
+## Configure an account webhook
+
+<Steps>
+  <Step title="Open Developer settings">
+    In Lumin, go to **Settings → Developer settings → API Key tab**.
+  </Step>
+  <Step title="Enter your webhook URL">
+    In the **Account callback** section, enter your endpoint URL. The URL must
+    use HTTPS.
+  </Step>
+  <Step title="Save">
+    Click **Save**. Lumin will begin delivering events to your endpoint
+    immediately.
+  </Step>
+</Steps>
+
+## Events received
+
+Your account webhook receives all [supported event types](/tabs/guides/webhooks/overview#supported-event-types) from across your workspace. There is no filtering — you receive every event triggered by any user or API key in the workspace.
+
+| Delivery behavior       | Detail                                          |
+| ----------------------- | ----------------------------------------------- |
+| One request per event   | Each event triggers a separate HTTP POST        |
+| Real-time delivery      | Events are sent as they occur                   |
+| Workspace-wide coverage | All events from all users and API keys          |
+| No opt-out              | You cannot filter which event types you receive |
+
+## Verify webhook signatures
+
+Every request Lumin sends includes the following headers:
+
+- **`User-Agent`**: Always `Lumin Sign API`
+- **`X-Signature`**: An HMAC-SHA256 hex digest of the request body, signed with your **Primary API key**
+
+<Warning>
+  Always verify the `X-Signature` header before processing a webhook payload.
+  Reject any request where the signature does not match.
+</Warning>
+
+**To verify a signature:**
+
+<Steps>
+  <Step title="Read the header">
+    Extract the `X-Signature` value from the incoming request headers.
+  </Step>
+  <Step title="Compute the expected signature">
+    Compute HMAC-SHA256 of the raw request body using your Primary API key as
+    the secret.
+  </Step>
+  <Step title="Compare">
+    Compare your computed value to the `X-Signature` header. Use a constant-time
+    comparison to avoid timing attacks.
+  </Step>
+  <Step title="Reject mismatches">
+    If the values do not match, reject the request with a non-200 status.
+  </Step>
+</Steps>
+
+**Example using OpenSSL:**
+
+```bash
+api_key='my_primary_api_key'
+json='{"event":{"event_time":1694664207595,"event_type":"signature_request_sent"},"signature_request":{"signature_request_id":"fa5c8a0b0f492d768749333ad6fcc214c111e967","title":"My first request"}}'
+
+echo -n $json | openssl dgst -sha256 -hmac $api_key
+# Expected X-Signature: 3810cb411041efab279d31698b9584372e5ede9d1641fbb354810f16e51be81c
+```
+
+Your Primary API key is available in **Settings → Developer settings → API Key**.
+
+## Respond to events
+
+Your endpoint must return HTTP `200 OK` within 30 seconds of receiving a request. No response body is required.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{}
+```
+
+<Tip>
+  Acknowledge the request immediately and process the event asynchronously in a
+  background job. This ensures you stay within the 30-second response window
+  even for complex workflows.
+</Tip>
+
+## Error handling and retries
+
+If your endpoint does not return `200 OK`, Lumin retries the delivery. The following conditions trigger a retry:
+
+- HTTP `4xx` or `5xx` response
+- No response within 30 seconds (timeout)
+- Connection failure
+
+For the full retry schedule, see [Retry schedule](/tabs/guides/webhooks/overview#retry-schedule).

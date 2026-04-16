@@ -1,0 +1,225 @@
+---
+title: "PDF from Template"
+description: "Generate a filled PDF document from a Lumin template by supplying merge tags, form fields, and variables."
+---
+
+Lumin templates are documents built in the Lumin application that contain placeholders — merge tags, form fields, and variables — which you can populate with dynamic data to produce customized PDF documents on demand.
+
+The same template can serve two purposes:
+
+- **Generate a standalone PDF** — produce a filled document without a signing workflow.
+- **Send as a signature request** — use the template as the document in a signature request via the `/signature_request/send-from-template` endpoint.
+
+<Note>
+  Tags and field names use `object.field` naming conventions (for example:
+  `Client.Name`, `Effective.Date`, `Customer.AgreeToTerms`).
+</Note>
+
+---
+
+## Placeholder types
+
+| Type           | Used in                | Description                                                                                        |
+| -------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| **Merge tag**  | Sign templates         | Text placeholder embedded in document content. Replaced with a plain-text value during generation. |
+| **Form field** | Sign and PDF templates | Interactive input in the document (text box, checkbox). Can be prefilled with a value.             |
+| **Variable**   | AgreementGen templates | Dynamic variable rendered as plain text. Used by AgreementGen (`ag_` prefix templates).            |
+
+<Warning>
+  Signature fields and radio button fields **cannot be prefilled**. They will
+  appear empty in the generated document regardless of any value you provide.
+</Warning>
+
+---
+
+<Steps>
+
+### List your templates
+
+Call `GET /templates` to see the templates available in your workspace. Provide the `X-Lumin-API-Version: 1.1` header.
+
+```bash
+curl https://api.luminpdf.com/v1/templates \
+  -H "Authorization: API-key <your-key>" \
+  -H "X-Lumin-API-Version: 1.1"
+```
+
+```json
+{
+  "page": 1,
+  "limit": 25,
+  "total_count": 3,
+  "data": [
+    {
+      "template_id": "sign_123456",
+      "type": "pdf",
+      "name": "Mutual NDA",
+      "created_at": 1748456885430,
+      "updated_at": 1748456885430
+    },
+    {
+      "template_id": "ag_456789",
+      "type": "lumin",
+      "name": "Lease Agreement",
+      "created_at": 1748456885430,
+      "updated_at": 1748456885430
+    },
+    {
+      "template_id": "pdf_456789",
+      "type": "pdf",
+      "name": "Onboarding Form",
+      "created_at": 1748456885430,
+      "updated_at": 1748456885430
+    }
+  ]
+}
+```
+
+Note the `template_id` — the prefix tells you the template type:
+
+| Prefix  | Template type                                              |
+| ------- | ---------------------------------------------------------- |
+| `sign_` | Lumin Sign template (supports merge tags and signer roles) |
+| `ag_`   | AgreementGen template (supports variables)                 |
+| `pdf_`  | PDF template (supports form fields)                        |
+
+### Get template details
+
+Call `GET /templates/{template_id}` to inspect the specific tags, fields, and variables the template expects. Use this to know exactly what keys to include when you generate the document.
+
+```bash
+curl https://api.luminpdf.com/v1/templates/sign_123456 \
+  -H "Authorization: API-key <your-key>"
+```
+
+```json
+{
+  "template_id": "sign_123456",
+  "type": "pdf",
+  "name": "Mutual NDA",
+  "signing_type": "ORDER",
+  "signer_roles": [
+    { "name": "Tenant", "group": 1 },
+    { "name": "Client", "group": 2 }
+  ],
+  "tags": [
+    { "name": "Client.Name", "type": "merge_tag", "is_required": true },
+    { "name": "Effective.Date", "type": "merge_tag", "is_required": false }
+  ],
+  "fields": [
+    {
+      "name": "Customer.Name",
+      "type": "text",
+      "is_required": true,
+      "assigned_role": "Tenant"
+    },
+    {
+      "name": "Customer.AgreeToTerms",
+      "type": "checkbox",
+      "is_required": true,
+      "assigned_role": "Tenant"
+    }
+  ],
+  "variables": [{ "name": "Company.Name" }, { "name": "Document.Name" }],
+  "created_at": 1748456885430,
+  "updated_at": 1748456885430
+}
+```
+
+Supply values for every item where `is_required: true`. Optional fields can be omitted.
+
+### Generate the PDF
+
+Call `POST /templates/{template_id}/generate-document` with the values for your tags, fields, and/or variables.
+
+<CodeGroup>
+
+```bash JSON response
+curl -X POST https://api.luminpdf.com/v1/templates/sign_123456/generate-document \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "tags": {
+      "Client.Name":    "Acme Corp",
+      "Effective.Date": "2025-08-01"
+    },
+    "fields": {
+      "Customer.Name":         "John Doe",
+      "Customer.AgreeToTerms": true
+    },
+    "variables": {
+      "Company.Name":  "Acme Corp",
+      "Document.Name": "Mutual NDA"
+    },
+    "document_name": "NDA_AcmeCorp"
+  }'
+```
+
+```bash PDF binary response
+curl -X POST https://api.luminpdf.com/v1/templates/sign_123456/generate-document \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/pdf" \
+  -d '{
+    "tags": {
+      "Client.Name":    "Acme Corp",
+      "Effective.Date": "2025-08-01"
+    },
+    "fields": {
+      "Customer.Name":         "John Doe",
+      "Customer.AgreeToTerms": true
+    },
+    "document_name": "NDA_AcmeCorp"
+  }' \
+  --output NDA_AcmeCorp.pdf
+```
+
+</CodeGroup>
+
+**JSON response** (`Accept: application/json`):
+
+```json
+{
+  "document_name": "NDA_AcmeCorp",
+  "signed_url": "https://files.luminpdf.com/download/nda-acmecorp-abc123.pdf?expires=...",
+  "expires_at": 1766726700
+}
+```
+
+`signed_url` is a pre-signed HTTPS download link that expires in 30 minutes (`expires_at` is a Unix timestamp in seconds).
+
+**PDF binary response** (`Accept: application/pdf`):
+
+When you set `Accept: application/pdf`, the API returns the raw PDF binary stream instead of JSON. Use this to stream the file directly without a separate download step.
+
+</Steps>
+
+---
+
+## Request body reference
+
+```json
+{
+  "tags": {
+    "Client.Name": "Acme Corp",
+    "Effective.Date": "2025-08-01"
+  },
+  "fields": {
+    "Customer.Name": "John Doe",
+    "Customer.AgreeToTerms": true
+  },
+  "variables": {
+    "Company.Name": "Acme Corp",
+    "Document.Name": "NDA Document"
+  },
+  "document_name": "My Contract"
+}
+```
+
+| Field           | Type   | Description                                                               |
+| --------------- | ------ | ------------------------------------------------------------------------- |
+| `tags`          | object | Merge tag values for Sign templates. Keys must match tag names exactly.   |
+| `fields`        | object | Form field values. Supports `text` (string) and `checkbox` (boolean).     |
+| `variables`     | object | Variable values for AgreementGen templates.                               |
+| `document_name` | string | Optional. Name for the generated document. Defaults to the template name. |

@@ -1,0 +1,96 @@
+---
+title: "API Keys"
+description: "Generate and use API Keys to authenticate requests to the Lumin API."
+---
+
+API Keys are the simplest way to authenticate requests to the Lumin API. They are long-lived credentials that you include on each request. API Keys are best suited for server-to-server integrations and backend automation where individual user authorization is not required.
+
+<Warning>
+  Treat API Keys like passwords. Do not share them, embed them in client-side
+  code, or commit them to source control.
+</Warning>
+
+## Generate an API key
+
+You must be a **Workspace Owner** to create API Keys.
+
+<Steps>
+  <Step title="Open Developer settings">
+    Log in to Lumin and go to **Settings → Developer settings → API keys**.
+  </Step>
+  <Step title="Generate a key">
+    Click **Generate key**, enter a name to identify this key, and click
+    **Create**.
+  </Step>
+  <Step title="Copy and store the key">
+    Copy the key immediately and store it in a secret manager. You will not be
+    able to see it again after closing the dialog.
+  </Step>
+</Steps>
+
+## Use your API key
+
+You can pass your API key to the Lumin API in two ways:
+
+<Tabs>
+  <Tab title="X-API-KEY header">
+    Pass the key in the `X-API-KEY` request header:
+
+    ```bash
+    curl -X GET "https://api.luminpdf.com/v1/user/info" \
+      -H "X-API-KEY: YOUR_API_KEY"
+    ```
+
+  </Tab>
+  <Tab title="HTTP Basic Auth">
+    Pass the key as the username in HTTP Basic Auth with an empty password. Include the trailing colon (`:`) to indicate there is no password:
+
+    ```bash
+    curl -X GET "https://api.luminpdf.com/v1/user/info" \
+      -u "YOUR_API_KEY:"
+    ```
+
+  </Tab>
+</Tabs>
+
+Both methods work for all Lumin API endpoints. Use whichever your HTTP client or library handles most conveniently.
+
+## Multiple API keys
+
+Each Lumin account can have up to **4 active API Keys** at a time. All active keys are valid and can be used in parallel — useful during key rotation or when multiple services need separate credentials.
+
+One key can be designated as the **Primary Key**. The Primary Key is used to generate HMAC signatures for [verifying webhook event payloads](/webhooks/account-webhooks#verify-webhook-signatures). If you change which key is primary, update your webhook signature verification logic accordingly.
+
+## Key rotation
+
+Rotate your API Keys regularly to limit the impact of accidental exposure.
+
+<Steps>
+  <Step title="Generate a new key">
+    Create a new key from **Settings → Developer settings → API keys**.
+  </Step>
+  <Step title="Update your integration">
+    Deploy the new key to your application or secret manager.
+  </Step>
+  <Step title="Verify the new key works">
+    Confirm your integration is authenticating successfully with the new key
+    before proceeding.
+  </Step>
+  <Step title="Delete the old key">
+    Once you have confirmed the new key works, delete the old key from Developer
+    settings.
+  </Step>
+</Steps>
+
+<Note>
+  Rotate keys at least every 6 months as a routine practice. Rotate immediately
+  if you suspect a key has been exposed or compromised.
+</Note>
+
+## Security best practices
+
+- Store API Keys in a secret manager such as AWS Secrets Manager, HashiCorp Vault, or GCP Secret Manager — not in environment files committed to source control.
+- Never embed API Keys in mobile apps, browser-based JavaScript, or any client-side code.
+- Use separate keys for separate services or environments so you can rotate or revoke them independently.
+- Always verify a new key works before deleting the old one.
+- For applications where individual users authorize access to their own data, use [OAuth 2.0](/tabs/guides/authentication/oauth2) instead of sharing a single API Key.

@@ -1,0 +1,141 @@
+---
+title: "Test Locally"
+description: "Use ngrok to expose your local server and test Lumin webhooks during development."
+---
+
+Lumin webhooks require a publicly accessible HTTPS URL. During development, your local server isn't reachable from the internet. A tunneling tool like **ngrok** solves this by creating a secure public URL that forwards requests to your local machine.
+
+## Prerequisites
+
+Before you start:
+
+- A local web server running on a known port (e.g., Express.js on port 3000)
+- An [ngrok account](https://ngrok.com) — the free tier is sufficient
+- A webhook endpoint in your application that accepts POST requests
+
+## Set up your local server
+
+If you don't have a webhook endpoint yet, here's a minimal example:
+
+```javascript
+const express = require("express");
+const app = express();
+
+app.use(express.json());
+
+app.post("/webhook", (req, res) => {
+  console.log("Webhook received:", JSON.stringify(req.body, null, 2));
+  res.status(200).json({ status: "ok" });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+Log the full payload to your console so you can inspect the event structure as you test.
+
+## Expose your local server with ngrok
+
+<Steps>
+  <Step title="Install ngrok">
+    Follow the [ngrok installation guide](https://ngrok.com/docs/getting-started/) for your operating system.
+  </Step>
+  <Step title="Start your local server">
+    Make sure your application is running. For the example above:
+
+    ```bash
+    node server.js
+    ```
+
+  </Step>
+  <Step title="Start the ngrok tunnel">
+    Run ngrok against the port your server is listening on:
+
+    ```bash
+    ngrok http 3000
+    ```
+
+    ngrok displays a public URL in the terminal output — for example:
+
+    ```
+    Forwarding  https://reinaldo-unglorifying.ngrok-free.dev -> http://localhost:3000
+    ```
+
+    Use the `https://` URL. Do not use the `http://` URL — Lumin requires HTTPS.
+
+  </Step>
+  <Step title="Configure the webhook URL in Lumin">
+    1. Go to **Settings → Developer settings → API Key tab → Account callback section**.
+    2. Enter your full ngrok URL including your endpoint path — for example, `https://reinaldo-unglorifying.ngrok-free.dev/webhook`.
+    3. Click **Save**.
+  </Step>
+  <Step title="Trigger a test event">
+    Perform an action in Lumin that fires an event — for example, create a signature request to trigger `signature_request_created`. Watch your terminal for the incoming request.
+  </Step>
+</Steps>
+
+## Example payload
+
+When a webhook arrives, your console will show a payload like this:
+
+```json
+{
+  "event": {
+    "event_time": 1758812613960,
+    "event_type": "signature_request_created",
+    "event_metadata": {
+      "signer_email": "test@luminpdf.com",
+      "workspace_id": "68d417..."
+    }
+  },
+  "signature_request": {
+    "signature_request_id": "68d559...",
+    "title": "Test webhook",
+    "created_at": 1758812612210,
+    "updated_at": 1758812612248,
+    "expires_at": 1827510980694,
+    "status": "NEED_TO_SIGN",
+    "signers": [
+      {
+        "name": "Signer 1",
+        "email": "signer1@luminpdf.com",
+        "status": "NEED_TO_SIGN",
+        "is_approved": false
+      }
+    ],
+    "details_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=..."
+  }
+}
+```
+
+## Tips for debugging
+
+**Log the raw request body.** Before parsing JSON, log the raw body string — this is what Lumin signs with HMAC-SHA256 for the `X-Signature` header. Parsing and re-serializing can alter whitespace and break signature verification.
+
+**Check the `X-Signature` header.** Use the verification steps in [Account webhooks](/tabs/guides/webhooks/account-webhooks#verify-webhook-signatures) to confirm your signature validation logic works correctly before deploying.
+
+**Watch the ngrok inspector.** ngrok provides a local web interface at `http://localhost:4040` that shows each request and response in detail, including headers and body. This is useful for debugging without modifying your server code.
+
+## Important limitations with ngrok
+
+<Warning>
+  Free ngrok sessions expire after 2 hours, and each restart generates a new
+  URL. Remember to update your webhook URL in Lumin every time you restart
+  ngrok.
+</Warning>
+
+- Always use the `https://` URL, not `http://`
+- The free tier has rate limits on incoming requests
+- ngrok URLs are not suitable for production — deploy to a stable HTTPS endpoint before going live
+
+## Next steps
+
+Once your local testing is working:
+
+1. Deploy your webhook handler to a production server with a stable HTTPS URL.
+2. Update the webhook URL in **Settings → Developer settings**.
+3. Set up monitoring and alerting for failed deliveries.
+
+See [Account webhooks](/tabs/guides/webhooks/account-webhooks) and [App webhooks](/tabs/guides/webhooks/app-webhooks) for full configuration details.

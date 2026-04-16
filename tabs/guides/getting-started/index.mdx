@@ -1,0 +1,120 @@
+---
+title: Introduction
+description: The Lumin API lets you build document workflows — eSignatures, templates, and automation — directly into your application.
+---
+
+> The Lumin API lets you build document workflows — eSignatures, templates, and automation — directly into your application.
+
+The Lumin API is a REST API that gives you programmatic access to Lumin's document and eSignature platform. Use it to send signature requests, manage templates, create documents, work with AgreementGen, and integrate with workspace and user data.
+
+All API endpoints use standard HTTP methods, return JSON responses (except documented file downloads), and follow predictable resource-oriented URL patterns.
+
+## Base URLs
+
+| Environment | Base URL                              |
+| ----------- | ------------------------------------- |
+| Production  | `https://api.luminpdf.com/v1`         |
+| Sandbox     | `https://api-sandbox.luminpdf.com/v1` |
+
+Use the sandbox environment for development and testing. Requests to the sandbox do not trigger real emails against production workflows.
+
+## What you can build
+
+Each card below opens the **overview for that API area** (tag), with links to every endpoint in that group.
+
+<CardGroup cols={2}>
+  <Card
+    title="Signature requests"
+    icon="pen-nib"
+    href="/tabs/api-reference/api/signature-requests/signature-requests.tag"
+    horizontal
+    color="#f2385a"
+  >
+    Send signature requests, update due dates, cancel requests, send reminders, get signing links, and download agreements and certificates.
+  </Card>
+
+<Card
+  title="Agreements"
+  icon="file-contract"
+  href="/tabs/api-reference/api/agreements/agreements.tag"
+  horizontal
+  color="#f2385a"
+>
+  Create AgreementGen documents from templates and download agreement files.
+</Card>
+
+<Card
+  title="Templates"
+  icon="file-lines"
+  href="/tabs/api-reference/api/templates/templates.tag"
+  horizontal
+  color="#f2385a"
+>
+  List templates, fetch template details, and generate PDFs from Sign or
+  AgreementGen templates.
+</Card>
+
+<Card
+  title="Documents"
+  icon="file-pdf"
+  href="/tabs/api-reference/api/documents/documents.tag"
+  horizontal
+  color="#f2385a"
+>
+  Create documents from file upload or PDF templates and organize them in your
+  Workspace.
+</Card>
+
+<Card
+  title="Workspaces"
+  icon="building"
+  href="/tabs/api-reference/api/workspaces/workspaces.tag"
+  horizontal
+  color="#f2385a"
+>
+  Read Workspace metadata and list members with pagination.
+</Card>
+
+  <Card
+    title="Users"
+    icon="user"
+    href="/tabs/api-reference/api/users/users.tag"
+    horizontal
+    color="#f2385a"
+  >
+    Retrieve information about the authenticated user.
+  </Card>
+</CardGroup>
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/tabs/quickstart" horizontal color="#f2385a">
+    Get oriented and run the docs locally, or follow your team’s onboarding steps.
+  </Card>
+
+<Card
+  title="Authentication"
+  icon="key"
+  href="/tabs/api-reference/api/lumin-api-reference.info"
+  horizontal
+  color="#f2385a"
+>
+  Use API keys or bearer tokens — see schemes and headers for every request.
+</Card>
+
+<Card
+  title="API reference"
+  icon="code"
+  href="/tabs/api-reference/api/signature-requests/signature-requests.tag"
+  horizontal
+  color="#f2385a"
+>
+  Jump into endpoint pages with request bodies, responses, and the interactive
+  playground.
+</Card>
+
+  <Card title="Changelog" icon="clock-rotate-left" href="/tabs/changelog" horizontal color="#f2385a">
+    See what’s new and what changed in recent API releases.
+  </Card>
+</CardGroup>

@@ -1,0 +1,225 @@
+---
+title: "Send Signature Request"
+description: "Upload a document and send it to one or more signers using the Lumin API."
+---
+
+Use this guide to send a document for signing from start to finish — uploading or linking a file, configuring signers, and retrieving the signed result.
+
+## Prerequisites
+
+- A valid API key. Pass it as `Authorization: API-key <your-key>` on every request.
+- A PDF document accessible via a public URL, or a file you can upload directly.
+
+---
+
+<Steps>
+
+### Provide your document
+
+You can supply the document in one of four ways. Use whichever fits your integration — only **one** field is allowed per request.
+
+| Field       | Type   | Description                                 |
+| ----------- | ------ | ------------------------------------------- |
+| `file_url`  | string | Public HTTPS URL to a single file           |
+| `file_urls` | array  | Array of public HTTPS URLs (multiple files) |
+| `file`      | binary | A single uploaded file (multipart)          |
+| `files`     | array  | Multiple uploaded files (multipart)         |
+
+### Configure signers
+
+Each signer object requires `email_address` and `name`. When using ordered signing (`signing_type: ORDER`), also set `group` to control the signing sequence.
+
+```json
+{
+  "signers": [
+    {
+      "email_address": "alice@example.com",
+      "name": "Alice"
+    }
+  ]
+}
+```
+
+For ordered signing with multiple signers:
+
+```json
+{
+  "signers": [
+    { "email_address": "alice@example.com", "name": "Alice", "group": 1 },
+    { "email_address": "bob@example.com", "name": "Bob", "group": 2 }
+  ]
+}
+```
+
+### Choose a signing type
+
+| Value       | Behaviour                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `SAME_TIME` | All signers receive the request at once and can sign in any order. This is the default.                                          |
+| `ORDER`     | Signers receive notifications sequentially by `group` number. Group 2 is only notified after all signers in group 1 have signed. |
+
+### Send the request
+
+```bash
+curl -X POST https://api.luminpdf.com/v1/signature_request/send \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Financial Year-End Report Authorization",
+    "file_url": "https://example.com/report.pdf",
+    "signing_type": "ORDER",
+    "expires_at": 1927510980694,
+    "signers": [
+      { "email_address": "alice@example.com", "name": "Alice", "group": 1 },
+      { "email_address": "bob@example.com",   "name": "Bob",   "group": 2 }
+    ],
+    "custom_email": {
+      "subject_name": "Please sign: Year-End Report",
+      "title": "Your signature is required"
+    }
+  }'
+```
+
+The API responds with a `201` and the new request's ID and initial status:
+
+```json
+{
+  "signature_request": {
+    "signature_request_id": "696d007913f3b8...",
+    "created_at": "1768751225657",
+    "status": "WAITING_FOR_PROCESSING"
+  }
+}
+```
+
+<Note>
+  `WAITING_FOR_PROCESSING` is the initial status. Processing is asynchronous —
+  the request transitions to `NEED_TO_SIGN` or `WAITING_FOR_OTHERS` shortly
+  after creation.
+</Note>
+
+### Check the status
+
+Poll `GET /signature_request/{id}` to read the current state of the request and each signer:
+
+```bash
+curl https://api.luminpdf.com/v1/signature_request/696d007913f3b8... \
+  -H "Authorization: API-key <your-key>"
+```
+
+```json
+{
+  "signature_request": {
+    "signature_request_id": "696d007913f3b8...",
+    "title": "Financial Year-End Report Authorization",
+    "status": "WAITING_FOR_OTHERS",
+    "signing_type": "ORDER",
+    "created_at": "1768751225657",
+    "expires_at": "1927510980694",
+    "details_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=...",
+    "signers": [
+      {
+        "email_address": "alice@example.com",
+        "name": "Alice",
+        "group": 1,
+        "status": "APPROVED",
+        "is_approved": true
+      },
+      {
+        "email_address": "bob@example.com",
+        "name": "Bob",
+        "group": 2,
+        "status": "NEED_TO_SIGN",
+        "is_approved": false
+      }
+    ]
+  }
+}
+```
+
+**Signature request statuses**
+
+| Status                   | Meaning                                             |
+| ------------------------ | --------------------------------------------------- |
+| `WAITING_FOR_PROCESSING` | Request received, being prepared                    |
+| `NEED_TO_SIGN`           | The sender must also sign (when sender is a signer) |
+| `WAITING_FOR_OTHERS`     | Waiting on at least one signer                      |
+| `APPROVED`               | All signers have signed                             |
+| `REJECTED`               | A signer declined                                   |
+| `FAILED`                 | Processing error — check `reason`                   |
+| `CANCELLED`              | Manually cancelled                                  |
+
+### Download the signed file
+
+Once the status is `APPROVED`, retrieve the signed document:
+
+```bash
+curl "https://api.luminpdf.com/v1/signature_request/696d007913f3b8.../file?type=agreement" \
+  -H "Authorization: API-key <your-key>"
+```
+
+```json
+{
+  "signed_url": "https://files.luminpdf.com/download/report-signed.pdf?expires=...",
+  "expires_at": 1766726700
+}
+```
+
+The `signed_url` is a pre-signed HTTPS download link that expires in 30 minutes. You can also request:
+
+| `type` value | Returns                                               |
+| ------------ | ----------------------------------------------------- |
+| `agreement`  | The signed agreement PDF (default)                    |
+| `coc`        | Certificate of Completion PDF                         |
+| `merged`     | Agreement + Certificate of Completion in a single PDF |
+
+</Steps>
+
+---
+
+## Full request body reference
+
+```json
+{
+  "title": "Financial Year-End Report Authorization",
+  "file_url": "https://example.com/report.pdf",
+  "signing_type": "ORDER",
+  "expires_at": 1927510980694,
+  "use_text_tags": false,
+  "signers": [
+    {
+      "email_address": "alice@example.com",
+      "name": "Alice",
+      "group": 1
+    },
+    {
+      "email_address": "bob@example.com",
+      "name": "Bob",
+      "group": 2
+    }
+  ],
+  "viewers": [
+    {
+      "email_address": "manager@example.com",
+      "name": "Manager"
+    }
+  ],
+  "custom_email": {
+    "sender_email": "noreply@yourcompany.com",
+    "subject_name": "Please sign: Year-End Report",
+    "title": "Your signature is required"
+  }
+}
+```
+
+---
+
+## Webhooks
+
+Instead of polling, listen for the `signature_request_approved` webhook event to be notified the moment all signers complete the request. See the [Webhooks guide](/tabs/guides/webhooks/overview) to configure an endpoint.
+
+<Tip>
+  Set `use_text_tags: true` if your PDF contains embedded text tags that define
+  signing fields. See the [Text Tags guide](/tabs/guides/walkthroughs/text-tags)
+  for syntax details.
+</Tip>

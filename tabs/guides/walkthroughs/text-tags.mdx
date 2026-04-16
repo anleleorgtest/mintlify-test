@@ -1,0 +1,142 @@
+---
+title: "Text Tags"
+description: "Embed signing field definitions directly in your PDF using text tags — no interactive document prep required."
+---
+
+Text tags let you define signing fields inside the PDF itself. When you send a signature request via the API, Lumin parses the document for any tags that match the expected syntax and converts them into interactive form fields for your signers.
+
+This approach is ideal when you generate documents programmatically and want to define field placement without using the Lumin Sign editor.
+
+---
+
+## How to enable text tags
+
+Include `"use_text_tags": true` in your `POST /signature_request/send` request body. If you omit this field, it defaults to `false` and tags are ignored.
+
+```json
+{
+  "use_text_tags": true,
+  "file_url": "https://example.com/my-document.pdf",
+  ...
+}
+```
+
+---
+
+## Syntax
+
+A text tag is a string placed directly in the body of your PDF document, wrapped in square brackets with identifiers separated by pipe characters:
+
+```
+[type|req|signerN|Label|UniqueId]
+```
+
+**Example tags:**
+
+```
+[sig|req|signer1|Sign here|sig_001]
+[initial|noreq|signer2|Initials|init_002]
+[text|req|signer1|Full name|name_003]
+[date|noreq|signer1|Date signed|date_004]
+```
+
+---
+
+## Identifiers
+
+| Identifier      | Accepted values                    | Required | Description                                                                                        |
+| --------------- | ---------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| **Field type**  | `sig`, `initial`, `text`, `date`   | Yes      | The type of interactive form field to render                                                       |
+| **Requirement** | `req`, `noreq`                     | Yes      | Whether the signer must complete this field before submitting                                      |
+| **Assigner**    | `signer1`, `signer2`, `signer3`, … | Yes      | Maps to the signer at that index in the `signers` array of your API request                        |
+| **Label**       | Any text                           | No       | Placeholder text shown inside the field. Currently overridden by Lumin Sign's default placeholders |
+| **Unique ID**   | Any text                           | No       | A name you assign to the field for your own reference                                              |
+
+### Field types
+
+| Type      | Renders as             |
+| --------- | ---------------------- |
+| `sig`     | Signature field        |
+| `initial` | Initials field         |
+| `text`    | Single-line text input |
+| `date`    | Date picker            |
+
+---
+
+## Important notes
+
+<Warning>
+  Tags are detected by reading actual text in the PDF — not by OCR. If your tag
+  text is embedded in an image, it will not be detected.
+</Warning>
+
+- **PDF format is required.** Form fields may be placed incorrectly if the document is not a PDF.
+- **Tags remain in the rendered document.** To hide a tag, set its text color to match the document background color.
+- **No whitespace allowed inside tags.** If you need extra horizontal space for layout, use underscores (`_`) after the last identifier instead:
+
+  ```
+  [sig|req|signer1|____________________]
+  ```
+
+---
+
+## Form field sizing
+
+- **Height** is fixed to accommodate a 12pt font.
+- **Width** equals the rendered length of the full tag string (including brackets). Add underscores after the last identifier to make a field wider.
+
+```
+[sig|req|signer1]               ← narrow field
+[sig|req|signer1|____________]  ← wider field
+```
+
+---
+
+## Validation behavior
+
+Lumin does not validate tag syntax at the time of the API request. Instead:
+
+- A tag missing any **required** identifier (type, requirement, assigner) is silently ignored — it is not converted into a form field and no error is returned.
+- A tag with an **invalid** value (e.g., wrong requirement type, or a signer index that does not exist in your `signers` array) triggers the `signature_request_invalid` webhook event after submission.
+
+<Note>
+  You will not receive an immediate API error for malformed tags. Subscribe to
+  the `signature_request_invalid` webhook event to catch these issues in your
+  integration. See the [Webhooks guide](/tabs/guides/webhooks/overview) for
+  setup instructions.
+</Note>
+
+---
+
+## Example: complete request with text tags
+
+```bash
+curl -X POST https://api.luminpdf.com/v1/signature_request/send \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Tenant Agreement",
+    "file_url": "https://example.com/tenant-agreement.pdf",
+    "use_text_tags": true,
+    "expires_at": 1927510980694,
+    "signing_type": "SAME_TIME",
+    "signers": [
+      { "email_address": "tenant@example.com", "name": "Alex Tenant" }
+    ]
+  }'
+```
+
+In this example, the PDF at `file_url` might contain:
+
+```
+Please sign below:
+[sig|req|signer1|Signature|sig_001]
+
+Date:
+[date|req|signer1|Date|date_001]
+
+Full name:
+[text|req|signer1|Full name|name_001]
+```
+
+`signer1` resolves to `tenant@example.com` because that signer is at index 1 in the `signers` array.

@@ -1,0 +1,49 @@
+---
+title: "Authentication"
+description: "Learn how to authenticate requests to the Lumin API using API Keys or OAuth 2.0."
+---
+
+Before your application can access Lumin data or call Lumin APIs, you need to authenticate your requests. Lumin supports two authentication methods:
+
+## API Key
+
+API Keys are long-lived credentials you generate from the Lumin Developer settings page. You include the key on each request using the `X-API-KEY` header or HTTP Basic Auth.
+
+**Best for:**
+
+- Server-to-server integrations
+- Scheduled backend jobs and cron tasks
+- Quick testing and development
+
+[Learn how to use API Keys →](/tabs/guides/authentication/api-key)
+
+## OAuth 2.0
+
+OAuth 2.0 lets end users grant your application access to their Lumin data without sharing their credentials. Lumin supports the authorization code flow with two client types:
+
+- **Public Application (PKCE)** — for mobile apps, single-page applications, and desktop apps that cannot securely store a client secret. Uses PKCE (Proof Key for Code Exchange) instead of a client secret.
+- **Private/Server Application** — for server-side applications that can securely store a client secret. Also supports refresh tokens for long-lived sessions.
+
+**Best for:**
+
+- Web apps where users sign in and authorize access
+- Applications acting on behalf of individual Lumin users
+- Scenarios requiring fine-grained permission control via scopes
+
+[Learn how to use OAuth 2.0 →](/tabs/guides/authentication/oauth2)
+
+## Choosing the right method
+
+| Scenario                                        | Recommended method                              |
+| ----------------------------------------------- | ----------------------------------------------- |
+| Scheduled backend job with no user interaction  | API Key or OAuth 2.0 Private Authorization Code |
+| Web app where users sign in and provide consent | OAuth 2.0 Private Authorization Code            |
+| Mobile or single-page app                       | OAuth 2.0 Public Authorization Code with PKCE   |
+| Quick testing or prototyping                    | API Key                                         |
+
+<Note>
+  Both methods can be used in production. If you are building a user-facing
+  application where individuals authorize access to their own Lumin data, use
+  OAuth 2.0. If you are running automated backend processes on behalf of a
+  single workspace, an API Key is simpler to set up.
+</Note>

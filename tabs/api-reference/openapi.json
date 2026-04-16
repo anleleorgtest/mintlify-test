@@ -1,0 +1,2606 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Lumin API Reference",
+    "description": "The Lumin API Reference provides a comprehensive set of tools to integrate document workflows — including editing, eSignatures, and automation — into your applications.\n\nUseful links:\n- [Document Repository](https://github.com/luminpdf/luminsign-docs)\n- [API Definition](https://github.com/luminpdf/luminsign-docs/blob/main/openapi.yaml)\n- [Authentication Guide](/docs/api/authentication/)\n",
+    "termsOfService": "https://www.luminpdf.com/terms-of-use/",
+    "contact": {
+      "name": "API Support",
+      "email": "integration@luminpdf.com",
+      "url": "https://help.luminpdf.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.luminpdf.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://api-sandbox.luminpdf.com/v1",
+      "description": "Sandbox server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Signature Requests",
+      "description": "Everything about Signature Requests"
+    },
+    {
+      "name": "Users",
+      "description": "Everything about Users"
+    },
+    {
+      "name": "Templates",
+      "description": "Everything about Templates"
+    },
+    {
+      "name": "Documents",
+      "description": "Everything about Documents"
+    },
+    {
+      "name": "Workspaces",
+      "description": "Everything about Workspaces"
+    },
+    {
+      "name": "Agreements",
+      "description": "Everything about Agreements"
+    }
+  ],
+  "paths": {
+    "/signature_request/{signature_request_id}": {
+      "get": {
+        "summary": "Get Signature Request",
+        "description": "Returns the information of the signature request.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the signature request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the information of the signature request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["signature_request"],
+                  "properties": {
+                    "signature_request": {
+                      "description": "Contains information about a signature request.",
+                      "$ref": "#/components/schemas/SignatureRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Signature Request",
+        "description": "Update the due date of an existing signature request.\n\nUpdate the **due date** (`expires_at`) of an existing signature request **only when**:\n- The request **status** is `NEED_TO_SIGN` or `WAITING_FOR_OTHERS`, and\n- The caller is the **creator** of the signature request.\n\nRequests in any **terminal or final status** (e.g., `APPROVED`, `REJECTED`, `FAILED`, `CANCELLED`, `WAITING_FOR_PROCESSING`) **cannot** be updated.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the signature request."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureRequestUpdateRequest"
+              },
+              "example": {
+                "expires_at": 1927510980000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the updated signature request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signature_request": {
+                      "description": "Signature request details with the updated data.",
+                      "$ref": "#/components/schemas/SignatureRequest"
+                    }
+                  }
+                },
+                "example": {
+                  "signature_request": {
+                    "signature_request_id": "1234567890",
+                    "title": "Title Here",
+                    "created_at": 1756887739247,
+                    "expires_at": 1927510980000,
+                    "status": "WAITING_FOR_OTHERS"
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/send": {
+      "post": {
+        "summary": "Send Signature Request",
+        "description": "Creates and sends a new signature request with the submitted documents.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the information of the created signature request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignatureRequestCreateResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/send-from-template": {
+      "post": {
+        "summary": "Send Signature Request from Template",
+        "description": "Creates and sends a new signature request from a template with the submitted template data.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureRequestFromTemplateDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the information of the created signature request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignatureRequestCreateResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/{signature_request_id}/signing-link": {
+      "post": {
+        "operationId": "get-signing-link",
+        "summary": "Get Signing Link",
+        "description": "Returns a signing link for an existing signature request. This enables presenting signing links within your own applications (mobile apps, web portals, etc.) instead of relying solely on email-based signing flows.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the signature request."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["signer_email"],
+                "properties": {
+                  "signer_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the signer whose signing link should be generated."
+                  }
+                }
+              },
+              "example": {
+                "signer_email": "tenant@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signing link generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["view_url", "signer_email", "status"],
+                  "properties": {
+                    "view_url": {
+                      "type": "string",
+                      "description": "The signing URL that the signer can use to view and sign the document."
+                    },
+                    "signer_email": {
+                      "type": "string",
+                      "description": "Email address of the signer."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Current signing status of the signer.",
+                      "enum": [
+                        "NEED_TO_SIGN",
+                        "APPROVED",
+                        "WAITING_FOR_OTHERS",
+                        "REJECTED",
+                        "FAILED",
+                        "WAITING_FOR_PROCESSING"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "view_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=8647b08b...",
+                  "signer_email": "tenant@example.com",
+                  "status": "NEED_TO_SIGN"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/cancel/{signature_request_id}": {
+      "put": {
+        "summary": "Cancel Signature Request",
+        "description": "Cancel a signature request.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the signature request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the information of the cancelled signature request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signature_request_id": {
+                      "type": "string",
+                      "description": "The unique identifier for the signature request."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "The status of the signature request.",
+                      "enum": ["CANCELLED"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/remind/{signature_request_id}": {
+      "post": {
+        "operationId": "send-reminder-emails",
+        "summary": "Send Reminder Emails",
+        "description": "Send reminder emails to selected signers under a signature request whose signer status is `NEED_TO_SIGN`.\n\n**Notes:**\n- Reminders sent to signers who already signed will be ignored (no email sent).\n- You can send reminders to up to 10 reminders per signer per day.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the signature request"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureRequestRemindRequest"
+              },
+              "example": {
+                "emails": ["john@example.com", "jane@example.com"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns signature request details and per-email reminder results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["signature_request", "reminders"],
+                  "properties": {
+                    "signature_request": {
+                      "description": "Contains information about a signature request.",
+                      "$ref": "#/components/schemas/SignatureRequest"
+                    },
+                    "reminders": {
+                      "type": "array",
+                      "description": "List of reminder email results for requested signer emails.",
+                      "items": {
+                        "$ref": "#/components/schemas/ReminderResult"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "signature_request": {
+                    "signature_request_id": "696d007913f3b8...",
+                    "title": "Signature request",
+                    "created_at": 1768751225657,
+                    "expires_at": 1927510980694,
+                    "status": "WAITING_FOR_OTHERS",
+                    "signers": [
+                      {
+                        "name": "John Doe",
+                        "email_address": "john@example.com",
+                        "status": "WAITING_FOR_OTHERS",
+                        "is_approved": true,
+                        "group": 1
+                      },
+                      {
+                        "name": "Jane Doe",
+                        "email_address": "jane@example.com",
+                        "status": "NEED_TO_SIGN",
+                        "is_approved": false,
+                        "group": 2
+                      }
+                    ],
+                    "updated_at": 1768751357064,
+                    "details_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=8647b08b...",
+                    "signing_type": "ORDER"
+                  },
+                  "reminders": [
+                    {
+                      "email": "john@example.com",
+                      "signer_status": "WAITING_FOR_OTHERS",
+                      "email_status": "BOUNCE"
+                    },
+                    {
+                      "email": "jane@example.com",
+                      "signer_status": "NEED_TO_SIGN",
+                      "email_status": "SENT"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/{signature_request_id}/file": {
+      "get": {
+        "summary": "Get Signature Request File",
+        "description": "Obtain the file of the Signature Request by id. This endpoint supports returning different types of files:\n- The **agreement** itself\n- The **Certificate of Completion (CoC)**\n- A **merged PDF** which combines both the agreement and the CoC\n\n**Preconditions by file type:**\n- For `agreement` file type: None\n- For `coc` file type: Requires the status to be **APPROVED** and a certificate must exist for that request\n- For `merged` file type: Requires the status to be **APPROVED** and both artifacts must exist. Lazy-generation is not performed for legacy requests, and developers should see errors in such cases.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the Signature Request."
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": ["agreement", "coc", "merged"],
+              "default": "agreement"
+            },
+            "required": false,
+            "description": "Which artifact to return:\n- `agreement`: The completed/signed agreement PDF\n- `coc`: The Certificate of Completion PDF  \n- `merged`: A single PDF with agreement **followed by** the CoC\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the downloadable file of the Signature Request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signed_url": {
+                      "type": "string",
+                      "description": "Signed HTTPS URL to the requested artifact. Expires in 30 minutes."
+                    },
+                    "expires_at": {
+                      "type": "integer",
+                      "format": "unix-epoch",
+                      "description": "Unix epoch timestamp (in seconds) indicating when `signed_url` will no longer work."
+                    }
+                  }
+                },
+                "example": {
+                  "signed_url": "https://files.luminpdf.com/download/nda-acmecorp-abc123.pdf?expires=20...",
+                  "expires_at": 1766726700
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/files_as_file_url/{signature_request_id}": {
+      "get": {
+        "summary": "Download File as File URL",
+        "description": "Obtain the file of the Signature Request by id as a file URL. Returns a JSON object with a url to the file",
+        "deprecated": true,
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the Signature Request to get"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file_url": {
+                      "type": "string",
+                      "description": "Signed HTTPS URL to download the document. Expires in 30 minutes."
+                    },
+                    "expires_at": {
+                      "type": "integer",
+                      "format": "unix-epoch",
+                      "description": "Unix epoch timestamp **in seconds** when the signed URL expires."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signature_request/files/{signature_request_id}": {
+      "get": {
+        "summary": "Download File",
+        "description": "Obtain the file of the Signature Request by id. Returns a PDF file.",
+        "deprecated": true,
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Signature Requests"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signature_request_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the Signature Request to get"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/info": {
+      "get": {
+        "summary": "Get User Information",
+        "description": "Get information of current user",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Returns the information of the current user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["user"],
+                  "properties": {
+                    "user": {
+                      "description": "Information of current user.",
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates": {
+      "get": {
+        "summary": "List Templates",
+        "description": "Returns a paginated list of templates in a Lumin Workspace, including AgreementGen, Sign and PDF templates.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify which page of the dataset to return (min = 1).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Specify how many templates to return: one of 10, 25, 50.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [10, 25, 50]
+            }
+          },
+          {
+            "name": "X-Lumin-API-Version",
+            "in": "header",
+            "description": "API version header",
+            "schema": {
+              "type": "string",
+              "default": "1.1"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateListResponse"
+                },
+                "example": {
+                  "page": 1,
+                  "limit": 25,
+                  "total_count": 3,
+                  "data": [
+                    {
+                      "template_id": "sign_123456",
+                      "type": "pdf",
+                      "name": "Mutual NDA",
+                      "created_at": 1748456885430,
+                      "updated_at": 1748456885430
+                    },
+                    {
+                      "template_id": "ag_456789",
+                      "type": "lumin",
+                      "name": "Lease Agreement",
+                      "created_at": 1748456885430,
+                      "updated_at": 1748456885430
+                    },
+                    {
+                      "template_id": "pdf_456789",
+                      "type": "pdf",
+                      "name": "Onboarding Form",
+                      "created_at": 1748456885430,
+                      "updated_at": 1748456885430
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}": {
+      "get": {
+        "summary": "Get Template Details",
+        "description": "Returns essential template details for a specific template.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the template."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the template details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDetail"
+                },
+                "example": {
+                  "template_id": "sign_123456",
+                  "type": "pdf",
+                  "name": "Mutual NDA",
+                  "signing_type": "ORDER",
+                  "signer_roles": [
+                    {
+                      "name": "Tenant",
+                      "group": 1
+                    },
+                    {
+                      "name": "Client",
+                      "group": 2
+                    }
+                  ],
+                  "tags": [
+                    {
+                      "name": "owner.name",
+                      "type": "merge_tag",
+                      "is_required": true
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "name": "hasCompleted",
+                      "type": "checkbox",
+                      "is_required": true,
+                      "assigned_role": "Tenant"
+                    }
+                  ],
+                  "variables": [
+                    {
+                      "name": "Company.Name",
+                      "value": "ACME Corp"
+                    },
+                    {
+                      "name": "Document.Name",
+                      "value": "NDA Document"
+                    }
+                  ],
+                  "created_at": 1748456885430,
+                  "updated_at": 1748456885430
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}/generate-document": {
+      "post": {
+        "summary": "Generate Document from Template",
+        "description": "Creates a downloadable PDF document from an existing Lumin template.\n\nIf a template contains **required tags or fields**, you must include these tags and fields in the request payload along with their corresponding values to generate the PDF document.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the template to generate document from."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "object",
+                    "description": "Key–value pairs for **Merge Tags** defined in the Sign template. Keys must match tag names. Values replace the corresponding tags and are rendered as plain text in the generated document.\n"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "description": "Key–value pairs for **Form Fields** defined in the template. Keys must match field names. Values prefill the corresponding fields in the generated document.\n"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "description": "Key–value pairs for **Variables** defined in the AgreementGen template. Keys must match variable names. Values prefill the corresponding variables and are rendered as plain text in the generated document.\n"
+                  },
+                  "document_name": {
+                    "type": "string",
+                    "description": "Optional name for the generated document. If omitted, the document name defaults to the template's name."
+                  }
+                }
+              },
+              "example": {
+                "tags": {
+                  "Client.Name": "Acme Corp",
+                  "Effective.Date": "2025-08-01"
+                },
+                "fields": {
+                  "CustomerName": "John Doe",
+                  "AgreeToTerms": true
+                },
+                "variables": {
+                  "Company.Name": "ACME Corp",
+                  "Document.Name": "NDA Document"
+                },
+                "document_name": "My Contract"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the generated document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentGenerateResponse"
+                },
+                "example": {
+                  "document_name": "NDA_AcmeCorp",
+                  "signed_url": "https://files.luminpdf.com/download/nda-acmecorp-abc123.pdf?expires=2025-08-24T10:45:00Z",
+                  "expires_at": 1766726700
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents": {
+      "post": {
+        "summary": "Create Document",
+        "description": "Create and save a PDF file in the user's Workspace.\n\nThe document can be created using one of two methods:\n- **file-upload** — Import from a file (PDF or other supported formats).\n- **template** — Create from a PDF template (only templates with `pdf_` prefix are supported).\n\nThe document can be saved to:\n- The Workspace's shared document list, optionally inside a folder\n- A specific Space's shared document list, optionally inside a folder\n- The user's Personal document list\n\n**Supported file formats (for file-upload):** PDF, DOCX, XLSX, PPTX, DOC, XLS, PNG, JPEG/JPG\n\n**File size limits:**\n- Free plans: 20 MB\n- Paid plans: 200 MB\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Documents"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCreateRequest"
+              },
+              "examples": {
+                "file-upload": {
+                  "summary": "Create document from file URL",
+                  "value": {
+                    "method": "file-upload",
+                    "document_name": "Patient Form",
+                    "location": {
+                      "type": "workspace",
+                      "folder_id": "123456"
+                    },
+                    "document_data": {
+                      "file_url": "https://files.luminpdf.com/download/nda-acmecorp-abc123.pdf"
+                    }
+                  }
+                },
+                "template": {
+                  "summary": "Create document from PDF template",
+                  "value": {
+                    "method": "template",
+                    "document_name": "Patient Information Form",
+                    "location": {
+                      "type": "workspace",
+                      "folder_id": "123456"
+                    },
+                    "document_data": {
+                      "template_id": "pdf_12312321",
+                      "fields": {
+                        "Client.Name": "Acme Corp",
+                        "Document.EffectiveDate": "2025-08-01"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the summary of the created document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSummary"
+                },
+                "example": {
+                  "id": "doc_abc123def456",
+                  "name": "Patient Form",
+                  "created_at": 1748456885430,
+                  "updated_at": 1748456885430,
+                  "location": {
+                    "type": "workspace",
+                    "workspace_id": "123456",
+                    "folder_id": "789"
+                  },
+                  "size": 245678,
+                  "mime_type": "application/pdf",
+                  "preview_url": "https://app.luminpdf.com/viewer/doc_abc123def456"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/info": {
+      "get": {
+        "summary": "Get Workspace Information",
+        "description": "Return information of the authorized Workspace.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Workspaces"],
+        "responses": {
+          "200": {
+            "description": "Returns the information of the authorized Workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInfo"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/members": {
+      "get": {
+        "summary": "Get Workspace Members",
+        "description": "Return a paginated list of members in a Workspace.",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Workspaces"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify which page of the dataset to return (min = 1).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Specify how many records to return: one of 10, 25, 50.",
+            "schema": {
+              "type": "integer",
+              "enum": [10, 25, 50]
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the list of members in the Workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMembersResponse"
+                },
+                "example": {
+                  "page": 1,
+                  "limit": 25,
+                  "total_count": "123",
+                  "data": [
+                    {
+                      "user_id": "655f...",
+                      "email": "thula@luminpdf.com",
+                      "name": "thula",
+                      "role": "owner",
+                      "joined_at": 1748456885430,
+                      "last_active_at": 1748456885430
+                    },
+                    {
+                      "user_id": "655f...",
+                      "email": "thula+1@luminpdf.com",
+                      "name": "thula 1",
+                      "role": "admin",
+                      "joined_at": 1748456885430,
+                      "last_active_at": 1748456885430
+                    },
+                    {
+                      "user_id": "655f...",
+                      "email": "thula+2@luminpdf.com",
+                      "name": "thula 2",
+                      "role": "member",
+                      "joined_at": 1748456885430,
+                      "last_active_at": 1748456885430
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agreements": {
+      "post": {
+        "summary": "Create Agreement",
+        "description": "Create a new AgreementGen document from a AgreementGen template.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Agreements"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgreementCreateRequest"
+              },
+              "example": {
+                "method": "template",
+                "agreement_name": "NDA Agreement",
+                "agreement_data": {
+                  "template_id": "ag_12312321",
+                  "fields": {
+                    "Client.Name": "Acme Corp",
+                    "Document.EffectiveDate": "2025-08-01"
+                  },
+                  "variables": {
+                    "Client.Name": "Acme Corp",
+                    "Document.EffectiveDate": "2025-08-01"
+                  },
+                  "linked_objects": [
+                    {
+                      "integration": "salesforce",
+                      "entity_type": "opportunity",
+                      "record_id": "0065g00000Vh123ABC",
+                      "reference_url": "https://lumin-uat-dev-ed.develop.lightning.force.com/lightning/r/Account/001QE00000eDhhjYAC/view"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the Agreement summary object data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgreementSummary"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agreements/{agreement_id}/file": {
+      "get": {
+        "summary": "Get Agreement File",
+        "description": "Obtain a downloadable file or binary PDF data from an AgreementGen document.\n",
+        "security": [
+          {
+            "ApiKey": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": ["Agreements"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agreement_id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID of the AgreementGen document."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the downloadable file or binary PDF data of the AgreementGen document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "signed_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Signed HTTPS URL to download the agreement file. Expires in 30 minutes."
+                    },
+                    "expires_at": {
+                      "type": "integer",
+                      "format": "unix-epoch",
+                      "description": "Unix epoch timestamp (in seconds) indicating when `signed_url` will no longer work."
+                    }
+                  }
+                },
+                "example": {
+                  "signed_url": "https://files.luminpdf.com/download/agreement-abc123.pdf?expires=2025-08-24T10:45:00Z",
+                  "expires_at": 1766726700000
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Provide your API key in the `Authorization` header, e.g., `Authorization: API-key`.\n"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Provide your token in the `Authorization` header, e.g., `Authorization: Bearer JWT`.\n"
+      }
+    },
+    "schemas": {
+      "Signer": {
+        "type": "object",
+        "required": ["email_address", "name"],
+        "properties": {
+          "email_address": {
+            "type": "string",
+            "description": "Email address of the signer."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the signer."
+          },
+          "group": {
+            "type": "string",
+            "description": "The signing order of signer for signature request with `signing_type` is ORDER. Required if `signing_type` is ORDER. Group starts at 1. Only signers in first group will receive email/notification, signers in subsequent groups will receive email/notification when all signers in previous group has signed.\n"
+          },
+          "verification": {
+            "type": "object",
+            "description": "Defines the identity verification method for a signer before they can complete the signing process. This allows stronger assurance of signer authenticity.\n",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["vc"],
+                "description": "The verification method used. Required when the `verification` object is present.\n"
+              },
+              "payload": {
+                "type": "object",
+                "description": "Payload parameters required by the verification method. Required when the `verification` object is present.\n",
+                "properties": {
+                  "doc_type": {
+                    "type": "string",
+                    "enum": [
+                      "driver_license",
+                      "photo_id",
+                      "nz_business_passport"
+                    ],
+                    "description": "The type of credential requested from the signer. If omitted, verifiable credential (VC) verification is optional.\n"
+                  },
+                  "claims": {
+                    "type": "array",
+                    "description": "The specific attributes requested from the credential. Required when the `verification` object is present. Required claims (always): `given_name` - Signer's name as input by sender validated against verified name on credential, `family_name` - Signer's family name as input by sender validated against verified name on credential. Optional claims: `issuing_country` - Country where the credential was issued, `issuing_authority` - The issuing authority that ties to the root certificate which was used to sign the Digital Signature Certificate, `document_number` - The ID/number of the credential\n",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "given_name",
+                        "family_name",
+                        "issuing_country",
+                        "issuing_authority",
+                        "document_number"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SignerWithRole": {
+        "type": "object",
+        "required": ["email_address", "name"],
+        "properties": {
+          "email_address": {
+            "type": "string",
+            "description": "Email address of the signer."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the signer."
+          },
+          "signer_role": {
+            "type": "string",
+            "description": "The name of the signer role defined in the template. Must match a signer role in the template. Required when the template has defined signer roles.\n"
+          },
+          "verification": {
+            "type": "object",
+            "description": "Defines the identity verification method for a signer before they can complete the signing process. This allows stronger assurance of signer authenticity.\n",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["vc"],
+                "description": "The verification method used. Required when the `verification` object is present.\n"
+              },
+              "payload": {
+                "type": "object",
+                "description": "Payload parameters required by the verification method. Required when the `verification` object is present.\n",
+                "properties": {
+                  "doc_type": {
+                    "type": "string",
+                    "enum": [
+                      "driver_license",
+                      "photo_id",
+                      "nz_business_passport"
+                    ],
+                    "description": "The type of credential requested from the signer. If omitted, verifiable credential (VC) verification is optional.\n"
+                  },
+                  "claims": {
+                    "type": "array",
+                    "description": "The specific attributes requested from the credential. Required when the `verification` object is present.\n\n**Required claims**:\n- `given_name` - Signer's name as input by sender validated against verified name on credential\n- `family_name` - Signer's family name as input by sender validated against verified name on credential\n\n**Optional claims**:\n- `issuing_country` - Country where the credential was issued\n- `issuing_authority` - The issuing authority that ties to the root certificate which was used to sign the Digital Signature Certificate\n- `document_number` - The ID/number of the credential\n",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "given_name",
+                        "family_name",
+                        "issuing_country",
+                        "issuing_authority",
+                        "document_number"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Viewer": {
+        "type": "object",
+        "required": ["email_address", "name"],
+        "properties": {
+          "email_address": {
+            "type": "string",
+            "description": "Email address of the viewer."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the viewer."
+          }
+        }
+      },
+      "SignatureRequest": {
+        "type": "object",
+        "required": [
+          "signature_request_id",
+          "title",
+          "created_at",
+          "expires_at",
+          "details_url",
+          "status",
+          "signers",
+          "signing_type"
+        ],
+        "properties": {
+          "signature_request_id": {
+            "type": "string",
+            "description": "The unique identifier for the signature request."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the signature request."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The time the signature request was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The time the signature request was last updated."
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "The time the signature request will expire."
+          },
+          "details_url": {
+            "type": "string",
+            "description": "The url to view the signature request in the browser."
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the signature request.",
+            "enum": [
+              "NEED_TO_SIGN",
+              "WAITING_FOR_OTHERS",
+              "APPROVED",
+              "REJECTED",
+              "WAITING_FOR_PROCESSING",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason for the status FAILED or REJECTED of the signature request."
+          },
+          "signing_type": {
+            "type": "string",
+            "description": "Recipient signing flow.",
+            "enum": ["SAME_TIME", "ORDER"]
+          },
+          "signers": {
+            "type": "array",
+            "items": {
+              "properties": {
+                "email_address": {
+                  "type": "string",
+                  "description": "Email address of the signer."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the signer."
+                },
+                "group": {
+                  "type": "number",
+                  "description": "The signing order of signer for the signature request with `signing_type` is `ORDER`. Required if `signing_type` is `ORDER`.\n\nOnly signers in `1st Signers` group will receive email/notification, signers in subsequent groups will receive email/notification when all signers in previous group has signed.\n\nGroup starts incrementing at 1.\n\nThe default value for group always is 1 if `signing_type` is `SAME_TIME.`\n"
+                },
+                "is_approved": {
+                  "type": "boolean",
+                  "description": "Whether the signer has approved the signature request."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The status of the Signer.",
+                  "enum": [
+                    "NEED_TO_SIGN",
+                    "APPROVED",
+                    "WAITING_FOR_OTHERS",
+                    "REJECTED",
+                    "FAILED",
+                    "WAITING_FOR_PROCESSING"
+                  ]
+                }
+              }
+            },
+            "description": "The signers of the signature request."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["email", "id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the user."
+          },
+          "email": {
+            "type": "string",
+            "description": "The email address of the user."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the user."
+          }
+        }
+      },
+      "SignatureRequestDTO": {
+        "type": "object",
+        "required": ["signers", "title", "expires_at"],
+        "properties": {
+          "file_url": {
+            "type": "string",
+            "description": "The URL of a single file to be downloaded and signed. This field is mutually exclusive with `file`, `files`, and `file_urls`. Only one of these fields should be provided in the request."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "A single uploaded file to be sent for signature. This field is mutually exclusive with `file_url`, `files`, and `file_urls`. Only one of these fields should be provided in the request."
+          },
+          "file_urls": {
+            "type": "array",
+            "description": "An array of URLs of files to be downloaded and signed. This field is mutually exclusive with `file`, `files`, and `file_url`. Only one of these fields should be provided in the request.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "files": {
+            "type": "array",
+            "description": "An array of uploaded files to be sent for signature. This field is mutually exclusive with `file`, `file_url`, and `file_urls`. Only one of these fields should be provided in the request.",
+            "items": {
+              "type": "binary"
+            }
+          },
+          "signers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Signer"
+            },
+            "description": "Signers of the signature request."
+          },
+          "viewers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Viewer"
+            },
+            "description": "Viewers of the signature request."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The title of the signature request."
+          },
+          "expires_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "When the signature request will expire. This is a unix epoch timestamp (miliseconds). Should be later than today."
+          },
+          "use_text_tags": {
+            "type": "boolean",
+            "description": "Set to `true` to enable Text Tag parsing in your document. Your Text Tags will be converted into UI components for the user to interact with. Defaults to `false`."
+          },
+          "signing_type": {
+            "type": "string",
+            "description": "The signing order for the signature request. Defaults to `SAME_TIME`.",
+            "enum": ["SAME_TIME", "ORDER"]
+          },
+          "custom_email": {
+            "type": "object",
+            "description": "Custom email content for the email sent to signers.",
+            "properties": {
+              "sender_email": {
+                "type": "string",
+                "description": "The email address of the sender."
+              },
+              "subject_name": {
+                "type": "string",
+                "description": "The subject of the email."
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of the email."
+              }
+            }
+          }
+        },
+        "example": {
+          "file_url": "https://lumin-assets-production.s3.us-east-1.amazonaws.com/api-demo/Direct+Debit+form.pdf",
+          "title": "Financial Year-End Report Authorization",
+          "signers": [
+            {
+              "email_address": "john.doe@example.com",
+              "name": "John Doe",
+              "group": 1
+            },
+            {
+              "email_address": "jane.doe@example.com",
+              "name": "Jane Doe",
+              "group": 2
+            }
+          ],
+          "viewers": [
+            {
+              "email_address": "jane.doe@example.com",
+              "name": "Jane Doe"
+            }
+          ],
+          "expires_at": 1927510980694,
+          "use_text_tags": false,
+          "signing_type": "ORDER"
+        }
+      },
+      "SignatureRequestFromTemplateDTO": {
+        "type": "object",
+        "required": ["template_id", "signers", "title", "expires_at"],
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "ID of the template. ID needs to include the prefix returned by the template list endpoint."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The title of the signature request."
+          },
+          "tags": {
+            "type": "object",
+            "description": "Key–value pairs for **Merge Tags** defined in the Sign template. Keys must match tag names. Values replace the corresponding tags and are rendered as **plain text** in the sent agreement.\n"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key–value pairs for **Form Fields** defined in the template. Keys must match field names. Values prefill the corresponding fields in the sent agreement.\n"
+          },
+          "variables": {
+            "type": "object",
+            "description": "Key–value pairs for **Variables** defined in the AgreementGen template. Keys must match variable names. Values prefill the corresponding variables and are rendered as **plain text** in the sent agreement.\n"
+          },
+          "signers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignerWithRole"
+            },
+            "description": "Signers of the signature request."
+          },
+          "viewers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Viewer"
+            },
+            "description": "Viewers of the signature request."
+          },
+          "custom_email": {
+            "type": "object",
+            "description": "Custom email content for the email sent to signers.",
+            "properties": {
+              "sender_email": {
+                "type": "string",
+                "description": "The email address of the sender."
+              },
+              "subject_name": {
+                "type": "string",
+                "description": "The subject of the email."
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of the email."
+              }
+            }
+          },
+          "expires_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "When the signature request will expire. This is a unix epoch timestamp (miliseconds). Should be later than today."
+          }
+        }
+      },
+      "TemplateDTO": {
+        "type": "object",
+        "required": ["template_id"],
+        "properties": {
+          "tags": {
+            "type": "object",
+            "description": "Key–value pairs for **Merge Tags** defined in the template. Keys must match tag names. Values replace the corresponding tags and are rendered as plain text in the generated document.\n"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Key–value pairs for **Form Fields** defined in the template. Keys must match field names. Values prefill the corresponding fields in the generated document.\n"
+          },
+          "document_name": {
+            "type": "string",
+            "description": "Optional custom name for the generated document. Defaults to the template's name if omitted."
+          }
+        },
+        "description": "At least one of `tags` or `fields` may be required when the template defines required tags/fields.\n"
+      },
+      "Template": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "name",
+          "tags",
+          "fields",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "The unique identifier for the template."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the template."
+          },
+          "signing_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SignatureRequest/properties/signing_type"
+              },
+              {
+                "description": "Recipient signing flow."
+              }
+            ]
+          },
+          "signer_roles": {
+            "type": "array",
+            "description": "Signer roles defined in the template.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the signer role."
+                },
+                "group": {
+                  "type": "integer",
+                  "description": "The signing order of signer for the signature request with `signing_type` is `ORDER`."
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "Merge Tags embedded in the template.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name/label of the tag."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of the text tag.",
+                  "enum": ["merge_tag"]
+                },
+                "is_required": {
+                  "type": "boolean",
+                  "description": "Whether the tag must be filled before completing the document."
+                }
+              }
+            }
+          },
+          "fields": {
+            "type": "array",
+            "description": "Form fields defined in the template.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name/label of the form field."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of the form field.",
+                  "enum": ["text", "checkbox"]
+                },
+                "is_required": {
+                  "type": "boolean",
+                  "description": "Whether the form field must be filled before completing the document."
+                }
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The time the template was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The time the template was last updated."
+          }
+        }
+      },
+      "TemplateListItem": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Unique identifier for the template"
+          },
+          "type": {
+            "type": "string",
+            "description": "Template file type. One of: pdf, lumin",
+            "enum": ["pdf", "lumin"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the template"
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The Unix timestamp when the template was first created."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The Unix timestamp of the last update to the template."
+          }
+        }
+      },
+      "TemplateDetail": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Unique identifier for the template"
+          },
+          "type": {
+            "type": "string",
+            "description": "Template file type. One of: pdf, lumin",
+            "enum": ["pdf", "lumin"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the template"
+          },
+          "signing_type": {
+            "type": "string",
+            "description": "Defines how recipients are expected to sign:\n- ORDER: Signers sign in a specific sequence.\n- SAME_TIME: All signers can sign in parallel.\nAgreementGen and PDF templates currently only supports signing_type as SAME_TIME.\n",
+            "enum": ["ORDER", "SAME_TIME"]
+          },
+          "signer_roles": {
+            "type": "array",
+            "description": "Describes the signer roles defined in the template.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "A label for the role (e.g., \"Tenant\", \"Manager\")."
+                },
+                "group": {
+                  "type": "integer",
+                  "description": "Indicates signing order group (e.g., 1 = sign first, 2 = sign second)."
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "Merge tags embedded in the Sign template.\n",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The label or identifier of the tag."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of tag, one of: merge_tag",
+                  "enum": ["merge_tag"]
+                },
+                "is_required": {
+                  "type": "boolean",
+                  "description": "Indicates whether the merge tag needs to be prefilled before the signature request can be completed."
+                }
+              }
+            }
+          },
+          "fields": {
+            "type": "array",
+            "description": "The form fields that appear in the template.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The label or identifier of the form field."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of field, one of: text, checkbox",
+                  "enum": ["text", "checkbox"]
+                },
+                "is_required": {
+                  "type": "boolean",
+                  "description": "Indicates whether the assigned signer must complete the field before the signature request can be completed."
+                },
+                "assigned_role": {
+                  "type": "string",
+                  "description": "The role (as defined in the template) to which this field is assigned. If not set, the field may not be linked to a specific role and will be dismissed during signature request creation."
+                }
+              }
+            }
+          },
+          "variables": {
+            "type": "object",
+            "description": "The variables defined in the AgreementGen template.\n",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The label or identifier of the variable."
+              }
+            }
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The Unix timestamp when the template was first created."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The Unix timestamp of the last update to the template."
+          }
+        }
+      },
+      "TemplateListResponse": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "The current page of results being returned."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of template records shown per page (e.g., 10, 25, or 50)."
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "The total number of template records returned."
+          },
+          "data": {
+            "type": "array",
+            "description": "The list of templates returned. Each object contains full details about one template.",
+            "items": {
+              "$ref": "#/components/schemas/TemplateListItem"
+            }
+          }
+        }
+      },
+      "DocumentLocation": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Location type.",
+            "enum": ["personal", "space", "workspace"]
+          },
+          "space_id": {
+            "type": "string",
+            "description": "ID of a specific Space in the Workspace. Required if `type` = `space`."
+          },
+          "folder_id": {
+            "type": "string",
+            "description": "ID of a specific folder within the chosen location."
+          }
+        }
+      },
+      "DocumentDataFileUpload": {
+        "type": "object",
+        "description": "Payload for file-upload method.",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Upload binary file. Required if `file_url` not provided."
+          },
+          "file_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL to download the source file. Required if `file` not provided."
+          }
+        }
+      },
+      "DocumentDataTemplate": {
+        "type": "object",
+        "description": "Payload for template method. Only PDF templates (template_id with `pdf_` prefix) are supported.",
+        "required": ["template_id"],
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Unique identifier of the PDF template. Obtainable from the Template list API.\nOnly PDF templates (IDs starting with `pdf_` prefix) are supported for document creation.\n"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key–value pairs for **Form Fields** defined in the template. Keys must match field names. Values prefill the corresponding form fields in the generated document. Currently supports: **checkbox, text field**.\n"
+          }
+        }
+      },
+      "DocumentCreateRequest": {
+        "type": "object",
+        "required": ["method", "document_name", "location", "document_data"],
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "Creation method. One of:\n- `file-upload` — import from a file (PDF or other supported formats).\n- `template` — create from a PDF template.\n",
+            "enum": ["file-upload", "template"]
+          },
+          "document_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Human-friendly title of the document (1–255 characters)."
+          },
+          "location": {
+            "$ref": "#/components/schemas/DocumentLocation"
+          },
+          "document_data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DocumentDataFileUpload"
+              },
+              {
+                "$ref": "#/components/schemas/DocumentDataTemplate"
+              }
+            ],
+            "description": "Method-specific payload. Schema depends on the `method` chosen:\n- For `file-upload`: Use `DocumentDataFileUpload` schema.\n- For `template`: Use `DocumentDataTemplate` schema.\n"
+          }
+        }
+      },
+      "DocumentSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at",
+          "location",
+          "size",
+          "mime_type",
+          "preview_url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the document in Lumin."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-friendly name of the document."
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "Unix timestamp (milliseconds) when the document was created."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "Unix timestamp (milliseconds) when the document was last updated."
+          },
+          "location": {
+            "type": "object",
+            "description": "Where the document is stored.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "One of:\n- `workspace` — Workspace's shared document list\n- `space` — Space's shared document list\n- `personal` — Personal document list\n",
+                "enum": ["workspace", "space", "personal"]
+              },
+              "workspace_id": {
+                "type": "string",
+                "description": "ID of the Workspace that owns this document (derived from the auth token)."
+              },
+              "space_id": {
+                "type": "string",
+                "description": "ID of the Space that contains the document if `location.type` is `space`. Blank otherwise."
+              },
+              "folder_id": {
+                "type": "string",
+                "description": "ID of the folder that contains the document, if any. Blank otherwise."
+              }
+            }
+          },
+          "size": {
+            "type": "integer",
+            "description": "Size of the PDF file in bytes."
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type of the file (e.g. `application/pdf`)."
+          },
+          "preview_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to open the document in Lumin's viewer."
+          }
+        }
+      },
+      "SignatureRequestUpdateRequest": {
+        "type": "object",
+        "required": ["expires_at"],
+        "properties": {
+          "expires_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The expiration time of the signature request, expressed as a Unix epoch timestamp in milliseconds. This value must represent a future point in time."
+          }
+        }
+      },
+      "SignatureRequestSummary": {
+        "type": "object",
+        "required": ["signature_request_id", "created_at", "status"],
+        "properties": {
+          "signature_request_id": {
+            "type": "string",
+            "description": "The unique identifier for the signature request."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "The time the signature request was created."
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the signature request.",
+            "enum": ["WAITING_FOR_PROCESSING", "FAILED"]
+          }
+        }
+      },
+      "SignatureRequestCreateResponse": {
+        "type": "object",
+        "required": ["signature_request"],
+        "properties": {
+          "signature_request": {
+            "description": "Contains information about a signature request.",
+            "$ref": "#/components/schemas/SignatureRequestSummary"
+          }
+        }
+      },
+      "SignatureRequestRemindRequest": {
+        "type": "object",
+        "required": ["emails"],
+        "properties": {
+          "emails": {
+            "type": "array",
+            "description": "List of emails to send reminder.",
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        }
+      },
+      "ReminderResult": {
+        "type": "object",
+        "required": ["email", "signer_status", "email_status"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The signer email that the reminder request targets."
+          },
+          "signer_status": {
+            "type": "string",
+            "description": "The signer status at the time of sending the reminder. One of: NEED_TO_SIGN, APPROVED, REJECTED, WAITING_FOR_OTHERS",
+            "enum": [
+              "NEED_TO_SIGN",
+              "APPROVED",
+              "REJECTED",
+              "WAITING_FOR_OTHERS"
+            ]
+          },
+          "email_status": {
+            "type": "string",
+            "description": "Result of reminder email delivery attempt.\n- `SENT` – Sent an email successfully\n- `EXCEED_DAILY_LIMIT` – Email not sent due to daily limit (**10 emails/signer/day**)\n- `BOUNCE` – Email not sent because the signer already signed or is not in turn to sign\n",
+            "enum": ["SENT", "EXCEED_DAILY_LIMIT", "BOUNCE"]
+          }
+        }
+      },
+      "WorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier for the user."
+          },
+          "email": {
+            "type": "string",
+            "description": "The email address of the user."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the user."
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the member.",
+            "enum": ["owner", "admin", "member"]
+          },
+          "joined_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The time the user joined the Workspace."
+          },
+          "last_active_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The time the user was last active in Lumin."
+          }
+        }
+      },
+      "WorkspaceInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the Workspace."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the Workspace."
+          },
+          "owner": {
+            "type": "string",
+            "description": "The email address of the Workspace owner."
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The time the Workspace was created."
+          },
+          "user_role": {
+            "type": "string",
+            "description": "The role of the current user in the Workspace.",
+            "enum": ["owner", "admin", "member"]
+          },
+          "total_members": {
+            "type": "integer",
+            "description": "The number of Workspace members."
+          },
+          "total_spaces": {
+            "type": "integer",
+            "description": "The number of Spaces in the Workspace."
+          }
+        }
+      },
+      "WorkspaceMembersResponse": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "The current page of results being returned."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of records shown per page (e.g., 10, 25, or 50)."
+          },
+          "total_count": {
+            "type": "string",
+            "description": "The total number of records returned for the request."
+          },
+          "data": {
+            "type": "array",
+            "description": "List of Workspace members returned for the requested page.",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMember"
+            }
+          }
+        }
+      },
+      "DocumentGenerateResponse": {
+        "type": "object",
+        "required": ["document_name", "signed_url", "expires_at"],
+        "properties": {
+          "document_name": {
+            "type": "string",
+            "description": "Name of the generated document (from input or default)."
+          },
+          "signed_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Signed HTTPS URL to download the generated document. Expires in 30 minutes."
+          },
+          "expires_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "Unix epoch timestamp (in seconds) indicating when signed_url will no longer work."
+          }
+        }
+      },
+      "LinkedObject": {
+        "type": "object",
+        "properties": {
+          "integration": {
+            "type": "string",
+            "description": "The external system or integration where the linked object lives. Example: salesforce, hubspot.\n"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "The type of the linked object in that provider's data model. Example: opportunity, contact, deal.\n"
+          },
+          "record_id": {
+            "type": "string",
+            "description": "The unique identifier of the linked object in the provider system. Example: 0065g00000Vh123ABC (Salesforce record ID).\n"
+          },
+          "reference_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The reference URL of the linked object in the provider system."
+          }
+        }
+      },
+      "AgreementTemplateData": {
+        "type": "object",
+        "required": ["template_id"],
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Unique identifier of the AG template. Obtainable from the template list API."
+          },
+          "variables": {
+            "type": "object",
+            "description": "Key-value map of Variables in the template. Pass values for the variables to render them into the created document or leave values blank to make them available for insertion later.\n"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Key-value pairs for Form Fields defined in the template. Keys must match field names. Values prefill the corresponding form fields in the generated document. Currently supports: `text` and `checkbox` fields.\n"
+          },
+          "linked_objects": {
+            "type": "array",
+            "description": "CRM or external objects linked to the Agreement.",
+            "items": {
+              "$ref": "#/components/schemas/LinkedObject"
+            }
+          }
+        }
+      },
+      "AgreementCreateRequest": {
+        "type": "object",
+        "required": ["method", "agreement_data"],
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["template"],
+            "description": "Must be set to `template`."
+          },
+          "agreement_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Human-friendly title of the agreement (1-255 chars). Defaults to input name or \"New document\" if not provided in the request body.\n"
+          },
+          "agreement_data": {
+            "$ref": "#/components/schemas/AgreementTemplateData"
+          }
+        }
+      },
+      "AgreementSummary": {
+        "type": "object",
+        "required": ["id", "name", "created_at"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the agreement."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the agreement."
+          },
+          "preview_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to preview the agreement in the browser."
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "unix-epoch",
+            "description": "The time the agreement was created (Unix timestamp in milliseconds)."
+          },
+          "linked_objects": {
+            "type": "array",
+            "description": "CRM or external objects linked to the agreement.",
+            "items": {
+              "$ref": "#/components/schemas/LinkedObject"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error_code", "error_message"],
+        "properties": {
+          "error_code": {
+            "type": "string",
+            "description": "The system error code."
+          },
+          "error_message": {
+            "type": "string",
+            "description": "The human-readable error message."
+          }
+        }
+      }
+    }
+  }
+}

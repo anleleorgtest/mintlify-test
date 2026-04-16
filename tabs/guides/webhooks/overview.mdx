@@ -1,0 +1,138 @@
+---
+title: "Webhooks"
+description: "Receive real-time push notifications from Lumin when events occur in your workspace — no polling required."
+---
+
+Webhooks let your application react to events in Lumin as they happen. Instead of repeatedly calling the API to check for changes, Lumin sends an HTTP POST request to your endpoint with a JSON payload describing the event.
+
+Common use cases include:
+
+- Downloading signed documents as soon as all parties complete signing
+- Keeping external systems like CRMs or ERPs in sync with signing status
+- Notifying your team when a document is declined or cancelled
+- Triggering internal workflows after a signature request is approved
+
+## How webhooks work
+
+When an event occurs in Lumin, the following sequence happens:
+
+<Steps>
+  <Step title="Event is triggered">
+    A user or API action causes an event — for example, all signers complete a
+    document.
+  </Step>
+  <Step title="Lumin sends a notification">
+    Lumin POSTs a JSON payload to your registered webhook URL describing the
+    event.
+  </Step>
+  <Step title="Your server acknowledges">
+    Your endpoint returns HTTP `200 OK` to confirm receipt. No response body is
+    required.
+  </Step>
+  <Step title="Your logic runs">
+    Your application processes the event — for example, calls `GET
+    /v1/signature_request/{id}/file` to download the signed PDF.
+  </Step>
+</Steps>
+
+### Example workflow
+
+A user sends a signature request in Lumin Sign. Once all signers complete it:
+
+1. Lumin sends a `signature_request_approved` event to your endpoint.
+2. Your server returns `200 OK`.
+3. Your app calls `GET https://api.luminpdf.com/v1/signature_request/{id}/file` to download the Certificate of Completion and signed PDF.
+
+## Types of webhooks
+
+Lumin supports two webhook types, scoped differently:
+
+| Type                 | Scope                                           | Configuration                                                  |
+| -------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| **Account webhooks** | All events across your entire workspace         | Settings → Developer settings → API Key → Account callback     |
+| **App webhooks**     | Events limited to OAuth scopes granted by users | Settings → Developer settings → Integration apps → App webhook |
+
+- [Account webhooks](/tabs/guides/webhooks/account-webhooks) — Configure once and receive all supported events workspace-wide.
+- [App webhooks](/tabs/guides/webhooks/app-webhooks) — Scoped to the permissions your OAuth app has been granted.
+
+## Supported event types
+
+| Event                                | Description                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `signature_request_created`          | A signature request was created successfully                               |
+| `signature_request_viewed`           | A signer opened the document                                               |
+| `signature_request_signed`           | A signer signed the document                                               |
+| `signature_request_approved`         | All signers have completed signing                                         |
+| `signature_request_declined`         | A signer declined — the request status changes to `REJECTED`               |
+| `signature_request_downloadable`     | The signed document and/or Certificate of Completion is ready for download |
+| `signature_request_invalid`          | An error occurred while processing the request (e.g. invalid text tags)    |
+| `signature_request_canceled`         | The signature request was cancelled                                        |
+| `signature_request_cancel_failed`    | The cancellation attempt failed                                            |
+| `signature_request_due_date_updated` | The due date on the signature request was updated                          |
+
+## Event payload structure
+
+All webhook events share the same JSON structure:
+
+```json
+{
+  "event": {
+    "event_time": 1758812586180,
+    "event_type": "signature_request_downloadable",
+    "event_metadata": {
+      "workspace_id": "68d417dcdeaecfae84872de8"
+    }
+  },
+  "signature_request": {
+    "signature_request_id": "68d558daa153cb3c30718518",
+    "title": "Test webhook",
+    "created_at": 1758812378277,
+    "updated_at": 1758812574883,
+    "expires_at": 1827510980694,
+    "status": "APPROVED",
+    "signers": [
+      {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "status": "APPROVED",
+        "is_approved": true
+      }
+    ]
+  },
+  "details_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=..."
+}
+```
+
+## Retry schedule
+
+If your endpoint does not return `200 OK`, Lumin retries delivery up to six times:
+
+| Retry attempt | Delay after previous attempt |
+| ------------- | ---------------------------- |
+| First         | 5 minutes                    |
+| Second        | 15 minutes                   |
+| Third         | 45 minutes                   |
+| Fourth        | 2 hours 15 minutes           |
+| Fifth         | 6 hours 45 minutes           |
+| Sixth         | 20 hours 15 minutes          |
+
+## Failure conditions
+
+A delivery attempt is considered failed when:
+
+- **Timeout** — your endpoint does not respond within 30 seconds
+- **Non-200 response** — your endpoint returns any HTTP status other than `200`
+- **Connection failure** — Lumin cannot connect to your endpoint
+
+## Best practices
+
+<Tip>
+  **Respond immediately, process asynchronously.** Return `200 OK` as quickly as
+  possible, then handle the event in a background job. This keeps your response
+  time well under the 30-second timeout.
+</Tip>
+
+- **Implement idempotency** — Lumin may deliver the same event more than once due to retries. Use `signature_request_id` and `event_type` together as a unique key to detect and ignore duplicates.
+- **Verify signatures** — Every request includes an `X-Signature` header. Always validate it before processing the payload. See [Account webhooks](/tabs/guides/webhooks/account-webhooks) and [App webhooks](/tabs/guides/webhooks/app-webhooks) for verification details.
+- **Log all events** — Store raw payloads for debugging and audit purposes.
+- **Use HTTPS** — Lumin only delivers webhooks to HTTPS endpoints.

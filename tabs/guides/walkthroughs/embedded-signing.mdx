@@ -1,0 +1,158 @@
+---
+title: "Embedded Signing"
+description: "Generate a signing link and embed the signing experience directly in your application."
+---
+
+By default, Lumin sends signers an email with a link to complete their signature. Embedded signing lets you bypass or supplement that email flow — you generate a signing link via the API and present it inside your own web app, mobile app, or customer portal.
+
+**When to use embedded signing:**
+
+- You want signers to sign without leaving your product.
+- Your users are already authenticated in your app and you want a seamless in-context experience.
+- You need to control exactly when and how the signing prompt is presented.
+- You want to combine embedded signing with email delivery — the two approaches can be used together.
+
+---
+
+## How it works
+
+<Steps>
+
+### Create the signature request
+
+Send the document for signing as usual using `POST /signature_request/send`. You do not need to disable email notifications — embedded signing works alongside email delivery.
+
+```bash
+curl -X POST https://api.luminpdf.com/v1/signature_request/send \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Rental Agreement",
+    "file_url": "https://example.com/rental-agreement.pdf",
+    "expires_at": 1927510980694,
+    "signing_type": "SAME_TIME",
+    "signers": [
+      { "email_address": "tenant@example.com", "name": "Alex Tenant" }
+    ]
+  }'
+```
+
+```json
+{
+  "signature_request": {
+    "signature_request_id": "696d007913f3b8...",
+    "created_at": "1768751225657",
+    "status": "WAITING_FOR_PROCESSING"
+  }
+}
+```
+
+Save the `signature_request_id` — you need it to generate signing links.
+
+### Generate a signing link
+
+Call `POST /signature_request/{id}/signing-link` with the signer's email address to get a unique, time-limited signing URL for that signer.
+
+```bash
+curl -X POST https://api.luminpdf.com/v1/signature_request/696d007913f3b8.../signing-link \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "signer_email": "tenant@example.com"
+  }'
+```
+
+```json
+{
+  "view_url": "https://sign.luminpdf.com/auth?mode=view-contract&token=8647b08b...",
+  "signer_email": "tenant@example.com",
+  "status": "NEED_TO_SIGN"
+}
+```
+
+### Present the link to the signer
+
+Use `view_url` to direct the signer to the Lumin signing interface. You have two options:
+
+<Tabs>
+  <Tab title="Redirect">
+    Redirect the user's browser directly to the signing URL:
+
+    ```js
+    window.location.href = signingResponse.view_url;
+    ```
+
+  </Tab>
+  <Tab title="Embed in iframe">
+    Embed the signing experience inline in your page:
+
+    ```html
+    <iframe
+      src="https://sign.luminpdf.com/auth?mode=view-contract&token=8647b08b..."
+      width="100%"
+      height="800px"
+      style="border: none;"
+      title="Sign document"
+    ></iframe>
+    ```
+
+  </Tab>
+</Tabs>
+
+</Steps>
+
+---
+
+## Signer status values
+
+The `status` field in the signing-link response reflects the signer's current state at the time of the request.
+
+| Status                   | Meaning                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `NEED_TO_SIGN`           | The signer has not yet signed. The `view_url` is ready to use.                 |
+| `WAITING_FOR_OTHERS`     | Ordered signing is in use and it is not yet this signer's turn.                |
+| `APPROVED`               | The signer has already completed signing.                                      |
+| `REJECTED`               | The signer declined to sign.                                                   |
+| `WAITING_FOR_PROCESSING` | The request is still being prepared. Retry after a short delay.                |
+| `FAILED`                 | A processing error occurred. Check the signature request details for `reason`. |
+
+<Note>
+  You can call the signing-link endpoint for a signer whose status is `APPROVED`
+  — it will still return a `view_url` so the signer can review the completed
+  document.
+</Note>
+
+---
+
+## Generating links for multiple signers
+
+Call the endpoint once per signer, passing each signer's email address. Each call returns an independent `view_url`.
+
+```bash
+# Link for signer 1
+curl -X POST https://api.luminpdf.com/v1/signature_request/696d007913f3b8.../signing-link \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "signer_email": "alice@example.com" }'
+
+# Link for signer 2
+curl -X POST https://api.luminpdf.com/v1/signature_request/696d007913f3b8.../signing-link \
+  -H "Authorization: API-key <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "signer_email": "bob@example.com" }'
+```
+
+---
+
+## Email delivery and embedded signing together
+
+Embedded signing does not suppress Lumin's email notifications. If you want both:
+
+- Leave email delivery on — signers can choose to sign via email or via your embedded link.
+- If you want to handle the experience entirely within your app, inform signers through your own messaging and rely on the signing link rather than the Lumin email.
+
+<Tip>
+  Use the `signature_request_approved` webhook event to trigger next steps in
+  your app — such as unlocking a feature or showing a completion screen — as
+  soon as all signers are done.
+</Tip>

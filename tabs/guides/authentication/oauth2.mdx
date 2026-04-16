@@ -1,0 +1,223 @@
+---
+title: "OAuth 2.0"
+description: "Use OAuth 2.0 to let users authorize your application to access their Lumin data."
+---
+
+OAuth 2.0 lets your application request access to a user's Lumin account on their behalf. The user reviews the requested permissions on a consent screen and explicitly approves or denies access. This makes OAuth 2.0 the right choice when your application acts on behalf of individual Lumin users rather than a single shared workspace.
+
+Lumin supports the **authorization code flow** with two client types:
+
+| Client type | Use case | Client secret required | Refresh tokens |
+|-------------|----------|------------------------|----------------|
+| **Public (PKCE)** | Mobile apps, SPAs, desktop apps | No — uses PKCE instead | No |
+| **Private/Server** | Server-side web apps, backend services | Yes | Yes |
+
+<Warning>
+  Public (PKCE) apps do not receive refresh tokens. When the access token expires, the user must re-authorize. If your app needs long-lived background access, create a Private/Server app instead.
+</Warning>
+
+## Register your application
+
+Before you can use OAuth 2.0, register your application in Lumin. You must be a **Workspace Owner** to do this. Each Workspace can have up to **5 integration apps**.
+
+<Steps>
+  <Step title="Open Integration apps">
+    Log in to Lumin and go to **Settings → Developer settings → Integration apps**, then click **Create app**.
+  </Step>
+  <Step title="Set application details">
+    Enter an **Application name** and select an **Application type**:
+    - **Public Application** — no client secret, uses PKCE. Choose this for mobile apps, SPAs, or desktop apps.
+    - **Private Application** — server-based with a client secret. Choose this for backend or server-side applications.
+
+    <Warning>
+      You cannot change the application type after creation. If you need a different type, create a new application.
+    </Warning>
+  </Step>
+  <Step title="Select scopes">
+    Choose only the scopes your application actually needs. The scopes you select appear on the user consent screen. See [Scopes](#scopes) for the full list.
+  </Step>
+  <Step title="Configure redirect URIs">
+    Enter one or more redirect URIs where Lumin will send users after they authorize your app.
+
+    - Must use `https://` or an app-specific scheme (e.g., `myapp://callback`)
+    - No wildcards, IP addresses, or relative paths
+    - Separate multiple URIs with commas
+  </Step>
+  <Step title="Configure consent screen">
+    Fill in the information users will see when granting access: app logo, website URL, Privacy Policy URL, Terms of Use URL, and a contact email.
+  </Step>
+  <Step title="Save and retrieve credentials">
+    Click **Create**. You will receive:
+    - **Client ID** — required for all OAuth 2.0 flows
+    - **Client Secret** — issued only for Private Applications
+
+    Store these credentials securely. Do not hardcode them in your source code or commit them to repositories.
+  </Step>
+</Steps>
+
+## Authorization code flow
+
+<Tabs>
+  <Tab title="Private / Server app">
+    Use this flow for server-side applications. The flow uses a client secret and issues refresh tokens so your server can maintain access without user re-interaction.
+
+    <Steps>
+      <Step title="Redirect the user to the authorization endpoint">
+        Send the user to Lumin's authorization URL with your app's parameters:
+
+        ```http
+        GET https://auth.luminpdf.com/oauth2/auth
+          ?client_id=YOUR_CLIENT_ID
+          &response_type=code
+          &redirect_uri=YOUR_REDIRECT_URI
+          &scope=openid offline_access sign:requests
+          &state=RANDOM_STATE_VALUE
+          &nonce=RANDOM_NONCE_VALUE
+        ```
+
+        Include `offline_access` in the scope to receive a refresh token.
+
+        After the user approves access, Lumin redirects them to your `redirect_uri` with an authorization `code` in the query string.
+      </Step>
+      <Step title="Exchange the authorization code for tokens">
+        Make a server-to-server POST request to exchange the code for an access token and refresh token:
+
+        ```bash
+        curl -X POST "https://auth.luminpdf.com/oauth2/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=authorization_code" \
+          -d "code=YOUR_AUTHORIZATION_CODE" \
+          -d "client_id=YOUR_CLIENT_ID" \
+          -d "client_secret=YOUR_CLIENT_SECRET" \
+          -d "redirect_uri=YOUR_REDIRECT_URI"
+        ```
+
+        Lumin returns the tokens:
+
+        ```json
+        {
+          "access_token": "eyJhbGci0i...",
+          "expires_in": 3600,
+          "refresh_token": "def502...",
+          "token_type": "bearer",
+          "scope": "openid offline_access sign:requests"
+        }
+        ```
+      </Step>
+      <Step title="Call Lumin APIs with the access token">
+        Pass the access token in the `Authorization` header as a Bearer token:
+
+        ```bash
+        curl -X GET "https://api.luminpdf.com/v1/user/info" \
+          -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+          -H "Content-Type: application/json"
+        ```
+      </Step>
+      <Step title="Refresh the access token">
+        Access tokens expire after 1 hour. Use the refresh token to get a new access token without requiring the user to re-authorize:
+
+        ```bash
+        curl -X POST "https://auth.luminpdf.com/oauth2/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=refresh_token" \
+          -d "refresh_token=YOUR_REFRESH_TOKEN" \
+          -d "client_id=YOUR_CLIENT_ID" \
+          -d "client_secret=YOUR_CLIENT_SECRET"
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Public app (PKCE)">
+    Use this flow for mobile apps, SPAs, and desktop apps that cannot securely store a client secret. PKCE (Proof Key for Code Exchange) replaces the client secret with a cryptographic challenge. Lumin supports the **S256 (SHA-256)** PKCE method.
+
+    <Steps>
+      <Step title="Generate a PKCE code verifier and challenge">
+        1. Create a `code_verifier`: a cryptographically random string.
+        2. Generate a `code_challenge` by hashing the `code_verifier` with SHA-256 and encoding the result as Base64URL.
+        3. Use `code_challenge_method=S256`.
+
+        ```
+        code_verifier  = "R8zFoqsOyeysd881QITZs3dK1YsdIvFNBf04D1bukBw"
+        code_challenge = "RqN6kvc2f99WD-BQG3SzsDfQcX54BxuyuM40alAt8b5M"
+        ```
+
+        Store the `code_verifier` — you will need it in step 3.
+      </Step>
+      <Step title="Redirect the user to the authorization endpoint">
+        Send the user to Lumin's authorization URL, including the PKCE parameters:
+
+        ```http
+        GET https://auth.luminpdf.com/oauth2/auth
+          ?client_id=YOUR_CLIENT_ID
+          &response_type=code
+          &redirect_uri=YOUR_REDIRECT_URI
+          &scope=openid sign:requests
+          &state=RANDOM_STATE_VALUE
+          &code_challenge=YOUR_CODE_CHALLENGE
+          &code_challenge_method=S256
+        ```
+
+        After the user approves, Lumin redirects them to your `redirect_uri` with an authorization `code`.
+      </Step>
+      <Step title="Exchange the authorization code for an access token">
+        Exchange the code for an access token. Provide the `code_verifier` instead of a client secret:
+
+        ```bash
+        curl -X POST "https://auth.luminpdf.com/oauth2/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=authorization_code" \
+          -d "code=YOUR_AUTHORIZATION_CODE" \
+          -d "client_id=YOUR_CLIENT_ID" \
+          -d "redirect_uri=YOUR_REDIRECT_URI" \
+          -d "code_verifier=YOUR_CODE_VERIFIER"
+        ```
+
+        ```json
+        {
+          "access_token": "ory_at__aqzPqv1z0Uw...",
+          "expires_in": 3598,
+          "token_type": "bearer",
+          "scope": "openid sign:requests"
+        }
+        ```
+
+        <Note>
+          Public apps do not receive a `refresh_token`. When the access token expires, start a new authorization flow.
+        </Note>
+      </Step>
+      <Step title="Call Lumin APIs with the access token">
+        Pass the access token in the `Authorization` header:
+
+        ```bash
+        curl -X GET "https://api.luminpdf.com/v1/user/info" \
+          -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+          -H "Content-Type: application/json"
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Scopes
+
+Scopes define what your application can access. Request only the scopes your app actually needs — users see the requested scopes on the consent screen.
+
+| Category | Scope | Description |
+|----------|-------|-------------|
+| Account | `openid` | Retrieve basic identity details (username, email, profile picture). |
+| Account | `offline_access` | Request a refresh token for long-lived access. Private apps only. |
+| Account | `profile.read` | View basic user profile information. |
+| Account | `profile.settings` | Manage user account settings. |
+| Workspace | `workspaces.read` | View information about the authenticated user's Workspace. |
+| Templates | `templates` | View and manage templates in a Workspace. |
+| Documents | `pdf:files` | Create, edit, and delete PDF files in a Workspace. |
+| Documents | `pdf:files.read` | Retrieve PDF documents stored in a Workspace. |
+| Signature Requests | `sign:requests` | Create, update, or view signature requests. |
+| Signature Requests | `sign:requests.read` | Retrieve signature requests. |
+| Agreements | `agreements` | Create, update, or delete AgreementGen documents. |
+
+<Note>
+  Private integration apps receive the `openid` and `offline_access` scopes by default.
+</Note>
+
+You can view the scope string for an existing application by opening its **Application details** modal in **Settings → Developer settings → Integration apps**.

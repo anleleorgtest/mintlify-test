@@ -1,0 +1,204 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "aspen",
+  "name": "Lumin Developer Docs",
+  "colors": {
+    "primary": "#f2385a",
+    "light": "#f2385a",
+    "dark": "#f2385a"
+  },
+  "favicon": "/favicon.png",
+  "openapi": "tabs/api-reference/openapi.json",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Home",
+        "pages": ["home"]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "tabs/guides/getting-started/index",
+              "tabs/guides/getting-started/quickstart"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "tabs/guides/authentication/overview",
+              "tabs/guides/authentication/oauth2",
+              "tabs/guides/authentication/api-key"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "tabs/guides/webhooks/overview",
+              "tabs/guides/webhooks/account-webhooks",
+              "tabs/guides/webhooks/app-webhooks",
+              "tabs/guides/webhooks/test-locally"
+            ]
+          },
+          {
+            "group": "Walkthroughs",
+            "pages": [
+              "tabs/guides/walkthroughs/text-tags",
+              "tabs/guides/walkthroughs/create-pdf-from-template",
+              "tabs/guides/walkthroughs/send-signature-request",
+              "tabs/guides/walkthroughs/embedded-signing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Documentation",
+            "pages": ["tabs/api-reference/api/lumin-api-reference.info"]
+          },
+          {
+            "group": "Lumin API reference",
+            "icon": "pencil",
+            "pages": [
+              {
+                "group": "Agreements",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/agreements/agreements.tag",
+                  "tabs/api-reference/api/agreements/create-agreement.api",
+                  "tabs/api-reference/api/agreements/get-agreement-file.api"
+                ]
+              },
+              {
+                "group": "Signature requests",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/signature-requests/signature-requests.tag",
+                  "tabs/api-reference/api/signature-requests/get-signature-request.api",
+                  "tabs/api-reference/api/signature-requests/update-signature-request.api",
+                  "tabs/api-reference/api/signature-requests/send-signature-request.api",
+                  "tabs/api-reference/api/signature-requests/send-signature-request-from-template.api",
+                  "tabs/api-reference/api/signature-requests/get-signing-link.api",
+                  "tabs/api-reference/api/signature-requests/send-reminder-emails.api",
+                  "tabs/api-reference/api/signature-requests/cancel-signature-request.api",
+                  "tabs/api-reference/api/signature-requests/get-signature-request-file.api",
+                  "tabs/api-reference/api/signature-requests/download-file-as-file-url.api",
+                  "tabs/api-reference/api/signature-requests/download-file.api"
+                ]
+              },
+              {
+                "group": "Templates",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/templates/templates.tag",
+                  "tabs/api-reference/api/templates/list-templates.api",
+                  "tabs/api-reference/api/templates/get-template-details.api",
+                  "tabs/api-reference/api/templates/generate-document-from-template.api"
+                ]
+              },
+              {
+                "group": "Documents",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/documents/documents.tag",
+                  "tabs/api-reference/api/documents/create-document.api",
+                  "tabs/api-reference/api/documents/upload-document.api"
+                ]
+              },
+              {
+                "group": "Workspaces",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/workspaces/workspaces.tag",
+                  "tabs/api-reference/api/workspaces/get-workspace-information.api",
+                  "tabs/api-reference/api/workspaces/get-workspace-members.api"
+                ]
+              },
+              {
+                "group": "Users",
+                "expanded": false,
+                "pages": [
+                  "tabs/api-reference/api/users/users.tag",
+                  "tabs/api-reference/api/users/get-user-information.api"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Lumin MCP",
+        "pages": [
+          "tabs/mcp/client",
+          "tabs/mcp/connect",
+          "tabs/mcp/supportedTool"
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "pages": ["tabs/changelog"]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Term Of Use",
+          "href": "https://www.luminpdf.com/terms-of-use",
+          "icon": "newspaper"
+        },
+        {
+          "anchor": "Help Center",
+          "href": "https://help.luminpdf.com/",
+          "icon": "circle-question"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/logo.svg",
+    "dark": "/logo/logo.svg",
+    "href": "/home"
+  },
+  "background": {
+    "decoration": "windows"
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "github-dark"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Contact developer support",
+        "href": "mailto:integration@luminpdf.com"
+      }
+    ]
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "website": "https://www.luminpdf.com",
+      "github": "https://github.com/luminpdf",
+      "linkedin": "https://www.linkedin.com/company/luminpdf"
+    }
+  }
+}
